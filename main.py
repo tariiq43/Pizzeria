@@ -1,4 +1,3 @@
-print('hello world')
-print('hello')
+import csv
+#CSV Datei einlesen
 
-print('hello back')
