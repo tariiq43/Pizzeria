@@ -1,7 +1,6 @@
 import csv
 from decimal import Decimal
 
-
 def lade_menu(dateiname):
     """Lädt das Menü aus einer CSV-Datei und gibt eine Liste von Dictionaries zurück."""
     menu = []
@@ -16,15 +15,13 @@ def lade_menu(dateiname):
             # Erwartete Spaltennamen (tolerant gegenüber kleinen Abweichungen)
             id_index = header.index("id") if "id" in header else 0
             name_index = header.index("name") if "name" in header else 1
-            kat_index = header.index("kategorie") if "kategorie" in header else 2
-            preis_index = header.index("preis") if "preis" in header else 3
+            preis_index = header.index("preis") if "preis" in header else 2
 
             for row in reader:
                 try:
                     item = {
                         "id": int(row[id_index]),
                         "name": row[name_index],
-                        "kategorie": row[kat_index],
                         "preis": Decimal(row[preis_index].replace(",", "."))
                     }
                     menu.append(item)
@@ -38,7 +35,6 @@ def lade_menu(dateiname):
     except Exception as e:
         print(f"Fehler beim Laden des Menüs: {e}")
         return []
-
 
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
