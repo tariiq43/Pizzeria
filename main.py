@@ -17,14 +17,14 @@ def lade_menu(dateiname):
             name_index = header.index("name") if "name" in header else 1
             preis_index = header.index("preis") if "preis" in header else 2
 
-            for row in reader:
+            for row in reader:      #Iteriert nun Zeile für Zeile damit es nicht nur den header der CSV anzeigt
                 try:
                     item = {
                         "id": int(row[id_index]),
                         "name": row[name_index],
                         "preis": Decimal(row[preis_index].replace(",", "."))
                     }
-                    menu.append(item)
+                    menu.append(item)           #speichert item in menu Dictionary
                 except Exception:
                     continue  # überspringt fehlerhafte Zeilen
         return menu
