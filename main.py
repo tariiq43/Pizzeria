@@ -1,5 +1,6 @@
 import csv
 from decimal import Decimal
+# from artikel_einlesen import *
 
 def lade_menu(dateiname):
     """Lädt das Menü aus einer CSV-Datei und gibt eine Liste von Dictionaries zurück."""
@@ -40,7 +41,7 @@ def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
     print("\n--- Menü Pizzeria Sunshine ---")
     for item in menu:
-        print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} €")
+        print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} €")         
     print("--------------------------------")
 
 
@@ -58,6 +59,10 @@ def artikel_hinzufuegen(menu, warenkorb):
         artikel_id = int(input("Bitte Artikel-ID eingeben: "))
         artikel = finde_artikel(menu, artikel_id)
         if artikel is None:
+            try:
+                artikel = int(artikel)
+            except ValueError as e:
+                print("Keine Zahl eingegeben")
             print("Ungültige Artikel-ID.")
             return
 
