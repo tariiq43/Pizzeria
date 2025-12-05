@@ -1,41 +1,69 @@
 import csv
 from decimal import Decimal
-# from artikel_einlesen import *
+import os
+from datetime import datetime
+from artikel_einlesen import lade_menu
 
-def lade_menu(dateiname):
-    """Lädt das Menü aus einer CSV-Datei und gibt eine Liste von Dictionaries zurück."""
-    menu = []
-    try:
-        with open(dateiname, mode="r", encoding="utf-8") as csvfile:        #öffnet CSV Datei im Lesemodus, zeigt korrekte Umlaute durch UTF-8 an
-            reader = csv.reader(csvfile, delimiter=";")
-            header = next(reader)
 
-            # Header-Namen in Kleinbuchstaben für flexible Erkennung
-            header = [h.strip().lower() for h in header]
+def bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis, dateiname="orders.csv"):
+    """
+    Speichert die Bestellung in einer CSV-Datei.
+    Jede Zeile entspricht einem Artikel der Bestellung.
+    """
+    datei_existiert = os.path.isfile(dateiname)
 
-            # Erwartete Spaltennamen (tolerant gegenüber kleinen Abweichungen)
-            id_index = header.index("id") if "id" in header else 0
-            name_index = header.index("name") if "name" in header else 1
-            preis_index = header.index("preis") if "preis" in header else 2
+    with open(dateiname, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f, delimiter=";")
 
-            for row in reader:      #Iteriert nun Zeile für Zeile damit es nicht nur den header der CSV anzeigt
-                try:
-                    item = {
-                        "id": int(row[id_index]),
-                        "name": row[name_index],
-                        "preis": Decimal(row[preis_index].replace(",", "."))
-                    }
-                    menu.append(item)           #speichert item in menu Dictionary
-                except Exception:
-                    continue  # überspringt fehlerhafte Zeilen
-        return menu
+        # Kopfzeile schreiben, wenn Datei neu ist
+        if not datei_existiert:
+            writer.writerow([
+                "order_id", "datum", "uhrzeit",
+                "artikel_id", "artikel_name", "menge",
+                "einzelpreis", "artikel_gesamtpreis",
+                "bestellung_gesamtpreis"
+            ])
 
-    except FileNotFoundError:
-        print("Menüdatei wurde nicht gefunden.")
-        return []
-    except Exception as e:
-        print(f"Fehler beim Laden des Menüs: {e}")
-        return []
+        for artikel_id, artikel in warenkorb.items():
+            artikel_gesamtpreis = artikel["preis"] * artikel["menge"]
+
+            writer.writerow([
+                order_id,
+                jetzt.strftime("%d.%m.%Y"),
+                jetzt.strftime("%H:%M:%S"),
+                artikel_id,
+                artikel["name"],
+                artikel["menge"],
+                f"{artikel['preis']:.2f}",
+                f"{artikel_gesamtpreis:.2f}",
+                f"{gesamtpreis:.2f}"
+            ])
+
+def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
+    """
+    Speichert die Quittung als TXT-Datei.
+    """
+    dateiname = f"quittung_{order_id}.txt"
+
+    with open(dateiname, mode="w", encoding="utf-8") as f:
+        f.write("QUITTUNG - PIZZERIA SUNSHINE\n")
+        f.write("=" * 60 + "\n")
+        f.write(f"Bestellnummer: {order_id}\n")
+        f.write(f"Datum: {jetzt.strftime('%d.%m.%Y')}\n")
+        f.write(f"Uhrzeit: {jetzt.strftime('%H:%M:%S')}\n")
+        f.write("=" * 60 + "\n")
+
+        for artikel in warenkorb.artikel:
+            f.write(
+                f"{artikel['name']:<35} {artikel['menge']:>2}x "
+                f"CHF {artikel['preis']:>6.2f} = CHF {artikel['gesamtpreis']:>7.2f}\n"
+            )
+
+        f.write("-" * 60 + "\n")
+        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>7.2f}\n")
+        f.write("=" * 60 + "\n")
+        f.write("Vielen Dank für Ihre Bestellung!\n")
+
 
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
@@ -100,69 +128,6 @@ def zeige_warenkorb(warenkorb):
         print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:.2f} €")
     print(f"------------------------------\nGesamt: {gesamt:.2f} €\n")
 
-
-if __name__ == "__main__":
-    menu = lade_menu("Menü Pizzeria.csv")
-    warenkorb = {}
-
-    if not menu:
-        exit()
-
-    while True:
-        print("\n1. Menü anzeigen")
-        print("2. Artikel hinzufügen")
-        print("3. Warenkorb anzeigen")
-        print("4. Beenden")
-
-        auswahl = input("Bitte wählen: ")
-
-        if auswahl == "1":
-            zeige_menu(menu)
-        elif auswahl == "2":
-            artikel_hinzufuegen(menu, warenkorb)
-        elif auswahl == "3":
-            zeige_warenkorb(warenkorb)
-        elif auswahl == "4":
-            print("Programm beendet.")
-            break
-        else:
-            print("Ungültige Auswahl.")
-
-
-import csv
-from decimal import Decimal
-
-def lade_menu(dateiname):
-    """Lädt das Menü aus einer CSV-Datei."""
-    menu = []
-    try:
-        with open(dateiname, mode="r", encoding="utf-8") as csvfile:
-            reader = csv.reader(csvfile, delimiter=";")
-            header = next(reader)
-            header = [h.strip().lower() for h in header]
-
-            id_index = header.index("id") if "id" in header else 0
-            name_index = header.index("name") if "name" in header else 1
-            preis_index = header.index("preis") if "preis" in header else 2
-
-            for row in reader:
-                try:
-                    item = {
-                        "id": int(row[id_index]),
-                        "name": row[name_index],
-                        "preis": Decimal(row[preis_index].replace(",", "."))
-                    }
-                    menu.append(item)
-                except Exception:
-                    continue
-        return menu
-
-    except FileNotFoundError:
-        print("Menüdatei wurde nicht gefunden.")
-        return []
-    except Exception as e:
-        print(f"Fehler beim Laden des Menüs: {e}")
-        return []
 
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
