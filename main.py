@@ -53,10 +53,16 @@ def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
         f.write(f"Uhrzeit: {jetzt.strftime('%H:%M:%S')}\n")
         f.write("=" * 60 + "\n")
 
-        for artikel in warenkorb.artikel:
+
+            # Alle Artikel aus dem Warenkorb in die Quittung schreiben
+        for artikel_id, artikel in warenkorb.items():
+            artikel_gesamtpreis = artikel["preis"] * artikel["menge"]
+
             f.write(
                 f"{artikel['name']:<35} {artikel['menge']:>2}x "
-                f"CHF {artikel['preis']:>6.2f} = CHF {artikel['gesamtpreis']:>7.2f}\n"
+            )
+            f.write(
+                f"CHF {artikel['preis']:>6.2f} = CHF {artikel_gesamtpreis:>7.2f}\n"
             )
 
         f.write("-" * 60 + "\n")
@@ -340,7 +346,9 @@ if __name__ == "__main__":
         print("2. Artikel hinzufügen")
         print("3. Wunschpizza erstellen")
         print("4. Warenkorb anzeigen")
-        print("5. Beenden")
+        print("5. Besellung abschliessen")
+        print("6. Beenden")
+
 
         auswahl = input("Bitte wählen: ")
 
@@ -353,9 +361,28 @@ if __name__ == "__main__":
         elif auswahl == "4":
             zeige_warenkorb(warenkorb)
         elif auswahl == "5":
+            if not warenkorb:
+                print("\nIhr Warenkorb ist leer, keien Bestellung möglich.")
+                continue
+
+            jetzt = datetime.now()
+            order_id = int(jetzt.timestamp())
+            gesamtpreis = sum(
+                artikel["preis"] * artikel["menge"]
+                for artikel in warenkorb.values()
+            )
+
+            bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis)
+            quittung_als_textdatei_speichern(warenkorb, order_id, jetzt,gesamtpreis)
+
+            print("\nBestellung gespeichert und Quittung erstellt.\n")
+            break
+        
+        elif auswahl == "6":
             print("Programm beendet.")
             break
         else:
-            print("Ungültige Auswahl.")
+            print("Ungültige Auswahl")
+
 
             

@@ -1,3 +1,9 @@
 order_id;datum;uhrzeit;artikel_id;artikel_name;menge;einzelpreis;artikel_gesamtpreis;bestellung_gesamtpreis
 1764935334;05.12.2025;12:48:54;10;Pizza Pesto e Rucola;1;18.80;18.80;18.80
 1764935915;05.12.2025;12:58:35;3;Pizza Prosciutto;2;18.00;36.00;36.00
+1764961880;05.12.2025;20:11:20;3;Pizza Prosciutto;2;18.00;36.00;36.00
+1764961974;05.12.2025;20:12:54;8;Pizza Tonno e Cipolla;4;18.50;74.00;74.00
+1764962389;05.12.2025;20:19:49;3;Pizza Prosciutto;1;18.00;18.00;18.00
+1764962743;05.12.2025;20:25:43;9;Pizza BBQ Chicken;1;20.00;20.00;20.00
+1764963259;05.12.2025;20:34:19;1;Pizza Margherita;1;15.50;15.50;15.50
+1764963389;05.12.2025;20:36:29;2;Pizza Funghi;2;17.00;34.00;34.00
