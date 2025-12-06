@@ -9,10 +9,10 @@ def lade_menu(dateiname):
             reader = csv.reader(csvfile, delimiter=";")
             header = next(reader)
 
-            # Header-Namen in Kleinbuchstaben für flexible Erkennung
+            
             header = [h.strip().lower() for h in header]
 
-            # Erwartete Spaltennamen (tolerant gegenüber kleinen Abweichungen)
+
             id_index = header.index("id") if "id" in header else 0
             name_index = header.index("name") if "name" in header else 1
             preis_index = header.index("preis") if "preis" in header else 2
