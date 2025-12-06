@@ -80,7 +80,7 @@ def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
     print("\n--- Menü Pizzeria Sunshine ---")
     for item in menu:
-        print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} €")         
+        print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} CHF")         
     print("--------------------------------")
 
 # Sucht in der Menü-Liste nach einer Artikel-ID und gibt den Artikel
