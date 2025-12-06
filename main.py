@@ -137,15 +137,15 @@ def zeige_warenkorb(warenkorb):
     for item in warenkorb.values():
         zwischensumme = item["preis"] * item["menge"]
         gesamt += zwischensumme
-        print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:.2f} €")
-    print(f"------------------------------\nGesamt: {gesamt:.2f} €\n")
+        print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:.2f} CHF")
+    print(f"------------------------------\nGesamt: {gesamt:.2f} CHF\n")
 
 # Gibt das Menü formatiert im Terminal aus
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
     print("\n--- Menü Pizzeria Sunshine ---")
     for item in menu:
-        print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} €")         
+        print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} CHF")         
     print("--------------------------------")
 
 # Sucht einen Artikel im Mneü anhand sicherer ID
