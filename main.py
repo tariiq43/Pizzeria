@@ -1,21 +1,23 @@
+# Benötigte Module importieren (csv, dezimalzahlen, datum/zeit)
 import csv
 from decimal import Decimal
 import os
 from datetime import datetime
 from artikel_einlesen import lade_menu
 
-
+# Speichert die Bestellung dauerhaft in der Datei "orders.csv"
 def bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis, dateiname="orders.csv"):
     """
     Speichert die Bestellung in einer CSV-Datei.
     Jede Zeile entspricht einem Artikel der Bestellung.
     """
+    #Prüfen, ob die Datei bereits existiert
     datei_existiert = os.path.isfile(dateiname)
 
     with open(dateiname, mode="a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f, delimiter=";")
 
-        # Kopfzeile schreiben, wenn Datei neu ist
+
         if not datei_existiert:
             writer.writerow([
                 "order_id", "datum", "uhrzeit",
@@ -39,10 +41,13 @@ def bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis, dateina
                 f"{gesamtpreis:.2f}"
             ])
 
+#Erzeugt eine Quittung als TXT-Datei zur Bestellung
 def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
     """
     Speichert die Quittung als TXT-Datei.
     """
+    
+    #Dateiname enthält die Bestellnummer(order_id)
     dateiname = f"quittung_{order_id}.txt"
 
     with open(dateiname, mode="w", encoding="utf-8") as f:
@@ -54,7 +59,7 @@ def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
         f.write("=" * 60 + "\n")
 
 
-            # Alle Artikel aus dem Warenkorb in die Quittung schreiben
+        # Alle Artikel aus dem Warenkorb in die Quittung übertragen
         for artikel_id, artikel in warenkorb.items():
             artikel_gesamtpreis = artikel["preis"] * artikel["menge"]
 
@@ -70,7 +75,7 @@ def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
         f.write("=" * 60 + "\n")
         f.write("Vielen Dank für Ihre Bestellung!\n")
 
-
+# Gibt das Mneü formatiert im Terminal aus
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
     print("\n--- Menü Pizzeria Sunshine ---")
@@ -78,7 +83,7 @@ def zeige_menu(menu):
         print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} €")         
     print("--------------------------------")
 
-
+# Sucht in der Menü-Liste nach einer Artikel-ID und gibt den Artikel
 def finde_artikel(menu, artikel_id):
     """Sucht einen Artikel anhand seiner ID."""
     for item in menu:
@@ -86,7 +91,7 @@ def finde_artikel(menu, artikel_id):
             return item
     return None
 
-
+# Ermöglicht dem Benutzer, einen Artikel aus dem Menü zum Warenkorb hinzuzufügen
 def artikel_hinzufuegen(menu, warenkorb):
     """Fügt einen Artikel aus dem Menü dem Warenkorb hinzu."""
     try:
@@ -119,13 +124,14 @@ def artikel_hinzufuegen(menu, warenkorb):
     except ValueError:
         print("Bitte nur ganze Zahlen eingeben.")
 
-
+# Zeigt alle Artikel im Warenkorb mit Mengen und Preisen an
 def zeige_warenkorb(warenkorb):
     """Zeigt alle Artikel im Warenkorb an."""
     if not warenkorb:
         print("\nIhr Warenkorb ist leer.")
         return
 
+# Zwischensumme pro Artikel berechnen (Preis * Menge)
     print("\n--- Warenkorb ---")
     gesamt = Decimal("0.00")
     for item in warenkorb.values():
@@ -134,7 +140,7 @@ def zeige_warenkorb(warenkorb):
         print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:.2f} €")
     print(f"------------------------------\nGesamt: {gesamt:.2f} €\n")
 
-
+# Gibt das Menü formatiert im Terminal aus
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
     print("\n--- Menü Pizzeria Sunshine ---")
@@ -142,6 +148,7 @@ def zeige_menu(menu):
         print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} €")         
     print("--------------------------------")
 
+# Sucht einen Artikel im Mneü anhand sicherer ID
 def finde_artikel(menu, artikel_id):
     """Sucht einen Artikel anhand seiner ID."""
     for item in menu:
@@ -149,22 +156,24 @@ def finde_artikel(menu, artikel_id):
             return item
     return None
 
+#Fügt einen Artikel aus dem Menü zum Warenkorb hinzu
 def artikel_hinzufuegen(menu, warenkorb):
     """Fügt einen Artikel aus dem Menü dem Warenkorb hinzu."""
     try:
-        artikel_id = int(input("Bitte Artikel-ID eingeben: "))
+        artikel_id = int(input("Bitte Artikel-ID eingeben: ")) # Artikel mit dieser ID im Menü suchen
         artikel = finde_artikel(menu, artikel_id)
         
         if artikel is None:
-            print("Ungültige Artikel-ID.")
+            print("Ungültige Artikel-ID.") # Wenn keine passende ID gefunden wurde
             return
 
-        menge = int(input(f"Wieviele '{artikel['name']}' möchten Sie? "))
+        menge = int(input(f"Wieviele '{artikel['name']}' möchten Sie? ")) # Menge prüfen 
         if menge <= 0:
             print("Ungültige Menge.")
             return
 
-        if artikel_id in warenkorb:
+# Falls Artikel schon im Warenkorb, Menge erhöhen
+        if artikel_id in warenkorb: 
             warenkorb[artikel_id]["menge"] += menge
         else:
             warenkorb[artikel_id] = {
@@ -178,33 +187,19 @@ def artikel_hinzufuegen(menu, warenkorb):
     except ValueError:
         print("Bitte nur ganze Zahlen eingeben.")
 
-def zeige_warenkorb(warenkorb):
-    """Zeigt alle Artikel im Warenkorb an."""
-    if not warenkorb:
-        print("\nIhr Warenkorb ist leer.")
-        return
-
-    print("\n--- Warenkorb ---")
-    gesamt = Decimal("0.00")
-    for item in warenkorb.values():
-        zwischensumme = item["preis"] * item["menge"]
-        gesamt += zwischensumme
-        print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:.2f} €")
-    print(f"------------------------------\nGesamt: {gesamt:.2f} €\n")
-
-
 # ============================================================================
 # WUNSCHPIZZA KLASSE
 # ============================================================================
 
 class WunschPizza:
     """Verwaltet eine selbst zusammengestellte Pizza."""
-    
+    # Liste der ausgewählten Zutaten
     def __init__(self):
         self.zutaten = []
         self.basis_preis = 12.00
         self.preis_pro_zutat = 1.50
     
+    # Fügt eine neue Zutat zur Pizza hinzu
     def zutat_hinzufuegen(self, zutat: str):
         """Fügt eine Zutat zur Pizza hinzu."""
         if zutat not in self.zutaten:
@@ -212,7 +207,8 @@ class WunschPizza:
             print(f"OK {zutat} hinzugefuegt (+CHF {self.preis_pro_zutat:.2f})")
         else:
             print(f"WARNUNG {zutat} ist bereits ausgewaehlt!")
-    
+   
+    #Entfernt eine Zutat, falls sie vorhanen
     def zutat_entfernen(self, zutat: str):
         """Entfernt eine Zutat von der Pizza."""
         if zutat in self.zutaten:
@@ -221,10 +217,12 @@ class WunschPizza:
         else:
             print(f"WARNUNG {zutat} ist nicht ausgewaehlt!")
     
+    # Berechnet den Gesamtpreis der Wunschpizza
     def preis_berechnen(self) -> float:
         """Berechnet den Gesamtpreis der Wunschpizza."""
         return self.basis_preis + (len(self.zutaten) * self.preis_pro_zutat)
     
+    #Zeigt die aktuell zusammengestellte Wunschpiza an
     def pizza_anzeigen(self):
         """Zeigt die zusammengestellte Pizza an."""
         print("\n" + "="*60)
@@ -243,6 +241,7 @@ class WunschPizza:
         print(f"Gesamtpreis: CHF {self.preis_berechnen():.2f}")
         print("="*60 + "\n")
     
+    # Prüft, ob die Pizza gültig ist (mindestens 1 Zutat)
     def ist_valid(self) -> bool:
         """Prüft, ob die Pizza gültig ist (mindestens eine Zutat)."""
         return len(self.zutaten) > 0
@@ -257,6 +256,7 @@ def wunschpizza_erstellen(menu, warenkorb):
     
     pizza = WunschPizza()
     
+    # Liste aller verfügbaren Zutaten ausgeben
     zutaten_liste = ["Mozzarella", "Tomaten", "Basilikum", "Pilze", "Zwiebeln", 
                      "Paprika", "Oliven", "Schinken", "Peperoni", "Ananas"]
     
@@ -277,7 +277,7 @@ def wunschpizza_erstellen(menu, warenkorb):
     try:
         while True:
             eingabe = input("Zutaten eingeben: ").strip().lower()
-            
+            # Eingabe wird verarbeitet
             if eingabe == "fertig":
                 if not pizza.ist_valid():
                     print("WARNUNG Bitte waehle mindestens eine Zutat!")
@@ -286,7 +286,7 @@ def wunschpizza_erstellen(menu, warenkorb):
             
             try:
                 nummern = [int(x.strip()) for x in eingabe.split(",")]
-                
+                # Benutzer hat mehrere Zutatennummern eingegeben
                 for nummer in nummern:
                     if 1 <= nummer <= len(zutaten_liste):
                         zutat = zutaten_liste[nummer - 1]
@@ -314,6 +314,7 @@ def wunschpizza_erstellen(menu, warenkorb):
                 name = f"Wunschpizza mit {zutaten_text}"
                 preis = pizza.preis_berechnen()
                 
+                # Feste ID für die Wunschpizza (damit andere IDs nicht überschrieben werden)
                 pizza_id = 999
                 if pizza_id in warenkorb:
                     warenkorb[pizza_id]["menge"] += menge
@@ -335,12 +336,13 @@ def wunschpizza_erstellen(menu, warenkorb):
 
 
 if __name__ == "__main__":
-    menu = lade_menu("Menü Pizzeria.csv")
+    menu = lade_menu("Menü Pizzeria.csv") # Menü wird aus der CSV-Datei geladen
     warenkorb = {}
 
     if not menu:
         exit()
 
+# Hauptmenü anzeigen
     while True:
         print("\n1. Menü anzeigen")
         print("2. Artikel hinzufügen")
@@ -366,13 +368,15 @@ if __name__ == "__main__":
                 continue
 
             jetzt = datetime.now()
-            order_id = int(jetzt.timestamp())
+            order_id = int(jetzt.timestamp()) # Bestellnummer setzen (Zeitstempel)
             gesamtpreis = sum(
                 artikel["preis"] * artikel["menge"]
                 for artikel in warenkorb.values()
             )
 
+            # Bestellung wir dauerhaft gespeichert
             bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis)
+            # Guittung wird als TXT erzeugt
             quittung_als_textdatei_speichern(warenkorb, order_id, jetzt,gesamtpreis)
 
             print("\nBestellung gespeichert und Quittung erstellt.\n")
