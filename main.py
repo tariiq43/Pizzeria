@@ -91,39 +91,6 @@ def finde_artikel(menu, artikel_id):
             return item
     return None
 
-# Ermöglicht dem Benutzer, einen Artikel aus dem Menü zum Warenkorb hinzuzufügen
-def artikel_hinzufuegen(menu, warenkorb):
-    """Fügt einen Artikel aus dem Menü dem Warenkorb hinzu."""
-    try:
-        artikel_id = int(input("Bitte Artikel-ID eingeben: "))
-        artikel = finde_artikel(menu, artikel_id)
-        if artikel is None:
-            try:
-                artikel = int(artikel)
-            except ValueError as e:
-                print("Keine Zahl eingegeben")
-            print("Ungültige Artikel-ID.")
-            return
-
-        menge = int(input(f"Wieviele '{artikel['name']}' möchten Sie? "))
-        if menge <= 0:
-            print("Ungültige Menge.")
-            return
-
-        if artikel_id in warenkorb:
-            warenkorb[artikel_id]["menge"] += menge
-        else:
-            warenkorb[artikel_id] = {
-                "name": artikel["name"],
-                "preis": artikel["preis"],
-                "menge": menge
-            }
-
-        print(f"{menge}x {artikel['name']} zum Warenkorb hinzugefügt.")
-
-    except ValueError:
-        print("Bitte nur ganze Zahlen eingeben.")
-
 # Zeigt alle Artikel im Warenkorb mit Mengen und Preisen an
 def zeige_warenkorb(warenkorb):
     """Zeigt alle Artikel im Warenkorb an."""
@@ -348,7 +315,7 @@ if __name__ == "__main__":
         print("2. Artikel hinzufügen")
         print("3. Wunschpizza erstellen")
         print("4. Warenkorb anzeigen")
-        print("5. Besellung abschliessen")
+        print("5. Bestellung abschliessen")
         print("6. Beenden")
 
 
@@ -364,7 +331,7 @@ if __name__ == "__main__":
             zeige_warenkorb(warenkorb)
         elif auswahl == "5":
             if not warenkorb:
-                print("\nIhr Warenkorb ist leer, keien Bestellung möglich.")
+                print("\nIhr Warenkorb ist leer, keine Bestellung möglich.")
                 continue
 
             jetzt = datetime.now()
@@ -376,7 +343,7 @@ if __name__ == "__main__":
 
             # Bestellung wir dauerhaft gespeichert
             bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis)
-            # Guittung wird als TXT erzeugt
+            # Quittung wird als TXT erzeugt
             quittung_als_textdatei_speichern(warenkorb, order_id, jetzt,gesamtpreis)
 
             print("\nBestellung gespeichert und Quittung erstellt.\n")
