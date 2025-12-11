@@ -4,42 +4,9 @@ from decimal import Decimal
 import os
 from datetime import datetime
 from artikel_einlesen import lade_menu
-
-# Speichert die Bestellung dauerhaft in der Datei "orders.csv"
-def bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis, dateiname="orders.csv"):
-    """
-    Speichert die Bestellung in einer CSV-Datei.
-    Jede Zeile entspricht einem Artikel der Bestellung.
-    """
-    #Prüfen, ob die Datei bereits existiert
-    datei_existiert = os.path.isfile(dateiname)
-
-    with open(dateiname, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f, delimiter=";")
-
-
-        if not datei_existiert:
-            writer.writerow([
-                "order_id", "datum", "uhrzeit",
-                "artikel_id", "artikel_name", "menge",
-                "einzelpreis", "artikel_gesamtpreis",
-                "bestellung_gesamtpreis"
-            ])
-
-        for artikel_id, artikel in warenkorb.items():
-            artikel_gesamtpreis = artikel["preis"] * artikel["menge"]
-
-            writer.writerow([
-                order_id,
-                jetzt.strftime("%d.%m.%Y"),
-                jetzt.strftime("%H:%M:%S"),
-                artikel_id,
-                artikel["name"],
-                artikel["menge"],
-                f"{artikel['preis']:.2f}",
-                f"{artikel_gesamtpreis:.2f}",
-                f"{gesamtpreis:.2f}"
-            ])
+from wunschpizza_klasse import WunschPizza
+from wunschpizza import wunschpizza_erstellen
+from bestellung import bestellung_in_csv_speichern
 
 #Erzeugt eine Quittung als TXT-Datei zur Bestellung
 def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
@@ -108,13 +75,6 @@ def zeige_warenkorb(warenkorb):
 
     print(f"{'':>2} {'Gesamtpreis':<25} = {gesamt:10.2f} CHF")
 
-# Gibt das Menü formatiert im Terminal aus
-def zeige_menu(menu):
-    """Zeigt das Menü formatiert an."""
-    print("\n--- Menü Pizzeria Sunshine ---")
-    for item in menu:
-        print(f"{item['id']:>2}. {item['name']:<25} {item['preis']:.2f} CHF")         
-    print("--------------------------------")
 
 # Sucht einen Artikel im Mneü anhand sicherer ID
 def finde_artikel(menu, artikel_id):
@@ -159,152 +119,6 @@ def artikel_hinzufuegen(menu, warenkorb):
     except ValueError:
         print("Bitte nur ganze Zahlen eingeben.")
 
-# ============================================================================
-# WUNSCHPIZZA KLASSE
-# ============================================================================
-
-class WunschPizza:
-    """Verwaltet eine selbst zusammengestellte Pizza."""
-    # Liste der ausgewählten Zutaten
-    def __init__(self):
-        self.zutaten = []
-        self.basis_preis = 12.00
-        self.preis_pro_zutat = 1.50
-    
-    # Fügt eine neue Zutat zur Pizza hinzu
-    def zutat_hinzufuegen(self, zutat: str):
-        """Fügt eine Zutat zur Pizza hinzu."""
-        if zutat not in self.zutaten:
-            self.zutaten.append(zutat)
-            print(f"OK {zutat} hinzugefuegt (+CHF {self.preis_pro_zutat:.2f})")
-        else:
-            print(f"WARNUNG {zutat} ist bereits ausgewaehlt!")
-   
-    #Entfernt eine Zutat, falls sie vorhanen
-    def zutat_entfernen(self, zutat: str):
-        """Entfernt eine Zutat von der Pizza."""
-        if zutat in self.zutaten:
-            self.zutaten.remove(zutat)
-            print(f"OK {zutat} entfernt")
-        else:
-            print(f"WARNUNG {zutat} ist nicht ausgewaehlt!")
-    
-    # Berechnet den Gesamtpreis der Wunschpizza
-    def preis_berechnen(self) -> float:
-        """Berechnet den Gesamtpreis der Wunschpizza."""
-        return self.basis_preis + (len(self.zutaten) * self.preis_pro_zutat)
-    
-    #Zeigt die aktuell zusammengestellte Wunschpiza an
-    def pizza_anzeigen(self):
-        """Zeigt die zusammengestellte Pizza an."""
-        print("\n" + "="*60)
-        print("DEINE WUNSCHPIZZA")
-        print("="*60)
-        print(f"Basis-Pizza: CHF {self.basis_preis:.2f}")
-        
-        if not self.zutaten:
-            print("Zutaten: Keine ausgewaehlt")
-        else:
-            print(f"Zutaten ({len(self.zutaten)} Stueck):")
-            for zutat in self.zutaten:
-                print(f"  - {zutat} (+CHF {self.preis_pro_zutat:.2f})")
-        
-        print("-"*60)
-        print(f"Gesamtpreis: CHF {self.preis_berechnen():.2f}")
-        print("="*60 + "\n")
-    
-    # Prüft, ob die Pizza gültig ist (mindestens 1 Zutat)
-    def ist_valid(self) -> bool:
-        """Prüft, ob die Pizza gültig ist (mindestens eine Zutat)."""
-        return len(self.zutaten) > 0
-
-
-# ============================================================================
-# FUNKTION 3: WUNSCHPIZZA ERSTELLEN UND BESTELLEN
-# ============================================================================
-
-def wunschpizza_erstellen(menu, warenkorb):
-    """Ermöglicht dem Kunden, seine eigene Pizza zusammenzustellen."""
-    
-    pizza = WunschPizza()
-    
-    # Liste aller verfügbaren Zutaten ausgeben
-    zutaten_liste = ["Mozzarella", "Tomaten", "Basilikum", "Pilze", "Zwiebeln", 
-                     "Paprika", "Oliven", "Schinken", "Peperoni", "Ananas"]
-    
-    print("\n" + "="*60)
-    print("WUNSCHPIZZA ERSTELLEN")
-    print("="*60)
-    print("Verfuegbare Zutaten:")
-    
-    for idx, zutat in enumerate(zutaten_liste, 1):
-        print(f"{idx:2d}. {zutat}")
-    
-    print("="*60)
-    print("Gib die Nummern der Zutaten ein (durch Komma getrennt)")
-    print("Beispiel: 1,3,5")
-    print("Oder gib 'fertig' ein, wenn du fertig bist")
-    print("="*60 + "\n")
-    
-    try:
-        while True:
-            eingabe = input("Zutaten eingeben: ").strip().lower()
-            # Eingabe wird verarbeitet
-            if eingabe == "fertig":
-                if not pizza.ist_valid():
-                    print("WARNUNG Bitte waehle mindestens eine Zutat!")
-                    continue
-                break
-            
-            try:
-                nummern = [int(x.strip()) for x in eingabe.split(",")]
-                # Benutzer hat mehrere Zutatennummern eingegeben
-                for nummer in nummern:
-                    if 1 <= nummer <= len(zutaten_liste):
-                        zutat = zutaten_liste[nummer - 1]
-                        pizza.zutat_hinzufuegen(zutat)
-                    else:
-                        print(f"WARNUNG Zutat {nummer} existiert nicht!")
-            except ValueError:
-                print("WARNUNG Bitte gib gueltige Nummern ein!")
-                continue
-    
-    except Exception as e:
-        print(f"Fehler: {e}")
-        return
-    
-    pizza.pizza_anzeigen()
-    
-    bestaetigung = input("Moechtest du diese Pizza bestellen? (ja/nein): ").strip().lower()
-    
-    if bestaetigung == "ja":
-        try:
-            menge = int(input("Wie viele Stueck? "))
-            
-            if menge > 0:
-                zutaten_text = ", ".join(pizza.zutaten)
-                name = f"Wunschpizza mit {zutaten_text}"
-                preis = pizza.preis_berechnen()
-                
-                # Feste ID für die Wunschpizza (damit andere IDs nicht überschrieben werden)
-                pizza_id = 999
-                if pizza_id in warenkorb:
-                    warenkorb[pizza_id]["menge"] += menge
-                else:
-                    warenkorb[pizza_id] = {
-                        "name": name,
-                        "preis": Decimal(str(preis)),
-                        "menge": menge
-                    }
-                
-                print(f"OK {menge}x {name} zum Warenkorb hinzugefuegt.")
-            else:
-                print("WARNUNG Die Menge muss mindestens 1 sein!")
-        
-        except ValueError:
-            print("WARNUNG Bitte gib eine gueltige Zahl ein!")
-    else:
-        print("Die Pizza wurde nicht hinzugefuegt.")
 
 
 if __name__ == "__main__":
