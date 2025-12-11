@@ -71,7 +71,7 @@ def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
             )
 
         f.write("-" * 60 + "\n")
-        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>7.2f}\n")
+        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>11.2f}\n")
         f.write("=" * 60 + "\n")
         f.write("Vielen Dank für Ihre Bestellung!\n")
 
@@ -130,8 +130,9 @@ def artikel_hinzufuegen(menu, warenkorb):
         artikel_id = int(input("Bitte Artikel-ID eingeben: ")) # Artikel mit dieser ID im Menü suchen
         if artikel_id == 21:
             wunschpizza_erstellen(menu, warenkorb)
-        else:
-            artikel = finde_artikel(menu, artikel_id)
+            return
+        
+        artikel = finde_artikel(menu, artikel_id)
         
         if artikel is None:
             print("Ungültige Artikel-ID.") # Wenn keine passende ID gefunden wurde
