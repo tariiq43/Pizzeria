@@ -7,6 +7,7 @@ from artikel_einlesen import lade_menu
 from wunschpizza_klasse import WunschPizza
 from wunschpizza import wunschpizza_erstellen
 from bestellung import bestellung_in_csv_speichern
+..
 
 #Erzeugt eine Quittung als TXT-Datei zur Bestellung
 def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
