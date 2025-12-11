@@ -104,9 +104,9 @@ def zeige_warenkorb(warenkorb):
     for item in warenkorb.values():
         zwischensumme = item["preis"] * item["menge"]
         gesamt += zwischensumme
-        print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:.2f} CHF")
+        print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:>10.2f} CHF")
 
-    print(f"{' ':>2}  {'Gesamt':<25} = {gesamt:.2f} CHF")
+    print(f"{'':>2} {'Gesamtpreis':<25} = {gesamt:10.2f} CHF")
 
 # Gibt das Menü formatiert im Terminal aus
 def zeige_menu(menu):
@@ -324,7 +324,7 @@ if __name__ == "__main__":
         print("6. Beenden")
 
 
-        auswahl = input("Bitte wählen: ")
+        auswahl = input("Bitte wählen:")
 
         if auswahl == "1":
             zeige_menu(menu)
