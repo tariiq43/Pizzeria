@@ -7,7 +7,6 @@ from artikel_einlesen import lade_menu
 from wunschpizza_klasse import WunschPizza
 from wunschpizza import wunschpizza_erstellen
 from bestellung import bestellung_in_csv_speichern
-..
 
 #Erzeugt eine Quittung als TXT-Datei zur Bestellung
 def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
@@ -76,14 +75,6 @@ def zeige_warenkorb(warenkorb):
 
     print(f"{'':>2} {'Gesamtpreis':<25} = {gesamt:10.2f} CHF")
 
-
-# Sucht einen Artikel im Mneü anhand sicherer ID
-def finde_artikel(menu, artikel_id):
-    """Sucht einen Artikel anhand seiner ID."""
-    for item in menu:
-        if item["id"] == artikel_id:
-            return item
-    return None
 
 #Fügt einen Artikel aus dem Menü zum Warenkorb hinzu
 def artikel_hinzufuegen(menu, warenkorb):
