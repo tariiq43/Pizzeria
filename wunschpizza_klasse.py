@@ -1,5 +1,4 @@
 from decimal import Decimal
-from wunschpizza_klasse import WunschPizza
 
 class WunschPizza:
     """Verwaltet eine selbst zusammengestellte Pizza."""
