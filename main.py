@@ -75,7 +75,7 @@ def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
         f.write("=" * 60 + "\n")
         f.write("Vielen Dank für Ihre Bestellung!\n")
 
-# Gibt das Mneü formatiert im Terminal aus
+# Gibt das Menü formatiert im Terminal aus
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
     print("\n--- Menü Pizzeria Sunshine ---")
@@ -128,7 +128,10 @@ def artikel_hinzufuegen(menu, warenkorb):
     """Fügt einen Artikel aus dem Menü dem Warenkorb hinzu."""
     try:
         artikel_id = int(input("Bitte Artikel-ID eingeben: ")) # Artikel mit dieser ID im Menü suchen
-        artikel = finde_artikel(menu, artikel_id)
+        if artikel_id == 21:
+            wunschpizza_erstellen(menu, warenkorb)
+        else:
+            artikel = finde_artikel(menu, artikel_id)
         
         if artikel is None:
             print("Ungültige Artikel-ID.") # Wenn keine passende ID gefunden wurde
