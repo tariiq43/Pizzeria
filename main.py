@@ -67,11 +67,11 @@ def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
                 f"{artikel['name']:<35} {artikel['menge']:>2}x "
             )
             f.write(
-                f"CHF {artikel['preis']:>6.2f} = CHF {artikel_gesamtpreis:>7.2f}\n"
+                f"CHF {artikel['preis']:>6.2f} = CHF {artikel_gesamtpreis:>10.2f}\n"
             )
 
         f.write("-" * 60 + "\n")
-        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>11.2f}\n")
+        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>10.2f}\n")
         f.write("=" * 60 + "\n")
         f.write("Vielen Dank für Ihre Bestellung!\n")
 
@@ -105,7 +105,8 @@ def zeige_warenkorb(warenkorb):
         zwischensumme = item["preis"] * item["menge"]
         gesamt += zwischensumme
         print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:.2f} CHF")
-    print(f"------------------------------\nGesamt: {gesamt:.2f} CHF\n")
+
+    print(f"{' ':>2}  {'Gesamt':<25} = {gesamt:.2f} CHF")
 
 # Gibt das Menü formatiert im Terminal aus
 def zeige_menu(menu):
@@ -316,10 +317,10 @@ if __name__ == "__main__":
 # Hauptmenü anzeigen
     while True:
         print("\n1. Menü anzeigen")
-        print("2. Artikel hinzufügen")
-        print("3. Wunschpizza erstellen")
-        print("4. Warenkorb anzeigen")
-        print("5. Bestellung abschliessen")
+        print("2. Bestellung aufgeben")
+        print("3. Warenkorb anzeigen")
+        print("4. Bestellung abschliessen")
+        print("5. Bestellung anzeigen")
         print("6. Beenden")
 
 
@@ -327,23 +328,17 @@ if __name__ == "__main__":
 
         if auswahl == "1":
             zeige_menu(menu)
+
         elif auswahl == "2":
             artikel_hinzufuegen(menu, warenkorb)
-        elif auswahl == "3":
-            wunschpizza_erstellen(menu, warenkorb)
-        elif auswahl == "4":
-            zeige_warenkorb(warenkorb)
-        elif auswahl == "5":
-            if not warenkorb:
-                print("\nIhr Warenkorb ist leer, keine Bestellung möglich.")
-                continue
 
+        elif auswahl == "3":
+            zeige_warenkorb(warenkorb)
+
+        elif auswahl == "4":
             jetzt = datetime.now()
             order_id = int(jetzt.timestamp()) # Bestellnummer setzen (Zeitstempel)
-            gesamtpreis = sum(
-                artikel["preis"] * artikel["menge"]
-                for artikel in warenkorb.values()
-            )
+            gesamtpreis = sum(artikel["preis"] * artikel["menge"]for artikel in warenkorb.values())
 
             # Bestellung wir dauerhaft gespeichert
             bestellung_in_csv_speichern(warenkorb, order_id, jetzt, gesamtpreis)
@@ -351,13 +346,15 @@ if __name__ == "__main__":
             quittung_als_textdatei_speichern(warenkorb, order_id, jetzt,gesamtpreis)
 
             print("\nBestellung gespeichert und Quittung erstellt.\n")
-            break
+            
         
-        elif auswahl == "6":
-            print("Programm beendet.")
+        elif auswahl == "5":
+            zeige_warenkorb(warenkorb)
+
+        elif auswahl == "6": 
+            print("Programm beendet")
             break
+    
         else:
             print("Ungültige Auswahl")
 
-
-            
