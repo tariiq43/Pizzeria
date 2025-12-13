@@ -2,40 +2,6 @@ from decimal import Decimal
 from wunschpizza import wunschpizza_erstellen
 
 
-#Erzeugt eine Quittung als TXT-Datei zur Bestellung
-def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
-    """
-    Speichert die Quittung als TXT-Datei.
-    """
-    
-    #Dateiname enthält die Bestellnummer(order_id)
-    dateiname = f"quittung_{order_id}.txt"
-
-    with open(dateiname, mode="w", encoding="utf-8") as f:
-        f.write("QUITTUNG - PIZZERIA SUNSHINE\n")
-        f.write("=" * 60 + "\n")
-        f.write(f"Bestellnummer: {order_id}\n")
-        f.write(f"Datum: {jetzt.strftime('%d.%m.%Y')}\n")
-        f.write(f"Uhrzeit: {jetzt.strftime('%H:%M:%S')}\n")
-        f.write("=" * 60 + "\n")
-
-
-        # Alle Artikel aus dem Warenkorb in die Quittung übertragen
-        for artikel_id, artikel in warenkorb.items():
-            artikel_gesamtpreis = artikel["preis"] * artikel["menge"]
-
-            f.write(
-                f"{artikel['name']:<35} {artikel['menge']:>2}x "
-            )
-            f.write(
-                f"CHF {artikel['preis']:>6.2f} = CHF {artikel_gesamtpreis:>10.2f}\n"
-            )
-
-        f.write("-" * 60 + "\n")
-        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>10.2f}\n")
-        f.write("=" * 60 + "\n")
-        f.write("Vielen Dank für Ihre Bestellung!\n")
-
 # Gibt das Menü formatiert im Terminal aus
 def zeige_menu(menu):
     """Zeigt das Menü formatiert an."""
@@ -104,3 +70,38 @@ def artikel_hinzufuegen(menu, warenkorb):
 
     except ValueError:
         print("Bitte nur ganze Zahlen eingeben.")
+
+
+#Erzeugt eine Quittung als TXT-Datei zur Bestellung
+def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
+    """
+    Speichert die Quittung als TXT-Datei.
+    """
+    
+    #Dateiname enthält die Bestellnummer(order_id)
+    dateiname = f"quittung_{order_id}.txt"
+
+    with open(dateiname, mode="w", encoding="utf-8") as f:
+        f.write("QUITTUNG - PIZZERIA SUNSHINE\n")
+        f.write("=" * 60 + "\n")
+        f.write(f"Bestellnummer: {order_id}\n")
+        f.write(f"Datum: {jetzt.strftime('%d.%m.%Y')}\n")
+        f.write(f"Uhrzeit: {jetzt.strftime('%H:%M:%S')}\n")
+        f.write("=" * 60 + "\n")
+
+
+        # Alle Artikel aus dem Warenkorb in die Quittung übertragen
+        for artikel_id, artikel in warenkorb.items():
+            artikel_gesamtpreis = artikel["preis"] * artikel["menge"]
+
+            f.write(
+                f"{artikel['name']:<35} {artikel['menge']:>2}x "
+            )
+            f.write(
+                f"CHF {artikel['preis']:>6.2f} = CHF {artikel_gesamtpreis:>10.2f}\n"
+            )
+
+        f.write("-" * 60 + "\n")
+        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>10.2f}\n")
+        f.write("=" * 60 + "\n")
+        f.write("Vielen Dank für Ihre Bestellung!\n")
