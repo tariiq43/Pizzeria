@@ -43,8 +43,12 @@ def zeige_warenkorb(warenkorb):
 #Fügt einen Artikel aus dem Menü zum Warenkorb hinzu
 def artikel_hinzufuegen(menu, warenkorb):
     """Fügt einen Artikel aus dem Menü dem Warenkorb hinzu."""
+    print("Gib 0 ein, um ins Hauptmenü zurückzukehren.")
     try:
-        artikel_id = int(input("Bitte Artikel-ID eingeben: ")) # Artikel mit dieser ID im Menü suchen
+        artikel_id = int(input("Bitte Artikel-ID eingeben (0 = zurück): ")) # Artikel mit dieser ID im Menü suchen
+        if artikel_id == 0:
+            print("Zurück zum Hauptmenü")
+            return
         if artikel_id == 21:
             wunschpizza_erstellen(menu, warenkorb)
             return
