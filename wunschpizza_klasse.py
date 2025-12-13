@@ -13,7 +13,9 @@ class WunschPizza:
         """Fügt eine Zutat zur Pizza hinzu."""
         if zutat not in self.zutaten:
             self.zutaten.append(zutat)
-            print(f"OK {zutat} hinzugefuegt (+CHF {self.preis_pro_zutat:.2f})")
+            text = f"OK {zutat} hinzugefuegt"
+            print(f"{text:<38} +CHF {self.preis_pro_zutat:>6.2f}")
+
         else:
             print(f"WARNUNG {zutat} ist bereits ausgewaehlt!")
    
@@ -35,7 +37,7 @@ class WunschPizza:
     def pizza_anzeigen(self):
         """Zeigt die zusammengestellte Pizza an."""
         print("\n" + "="*60)
-        print("DEINE WUNSCHPIZZA")
+        print("DEINE WUNSCHPIZZA".center(60))
         print("="*60)
         print(f"Basis-Pizza: CHF {self.basis_preis:.2f}")
         
@@ -44,10 +46,10 @@ class WunschPizza:
         else:
             print(f"Zutaten ({len(self.zutaten)} Stueck):")
             for zutat in self.zutaten:
-                print(f"  - {zutat} (+CHF {self.preis_pro_zutat:.2f})")
+                print(f"  - {zutat:<20} +CHF {self.preis_pro_zutat:>6.2f}")
         
         print("-"*60)
-        print(f"Gesamtpreis: CHF {self.preis_berechnen():.2f}")
+        print(f"{'Gesamtpreis:':<20} CHF {self.preis_berechnen():>6.2f}")
         print("="*60 + "\n")
     
     # Prüft, ob die Pizza gültig ist (mindestens 1 Zutat)
