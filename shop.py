@@ -31,9 +31,13 @@ def zeige_warenkorb(warenkorb):
     for item in warenkorb.values():
         zwischensumme = item["preis"] * item["menge"]
         gesamt += zwischensumme
-        print(f"{item['menge']}x {item['name']:<25} = {zwischensumme:>10.2f} CHF")
+        name = item["name"]
+        if len(name) >30:
+            name = name[:27] + "..."
+   
+        print(f"{item['menge']}x {name:<30} = {zwischensumme:>7.2f} CHF")
 
-    print(f"{'':>2} {'Gesamtpreis':<25} = {gesamt:10.2f} CHF")
+    print(f"{'':>2} {'Gesamtpreis':<30} = {gesamt:>7.2f} CHF")
 
 
 #Fügt einen Artikel aus dem Menü zum Warenkorb hinzu
@@ -91,17 +95,18 @@ def quittung_als_textdatei_speichern(warenkorb, order_id, jetzt, gesamtpreis):
 
 
         # Alle Artikel aus dem Warenkorb in die Quittung übertragen
-        for artikel_id, artikel in warenkorb.items():
+        for artikel in warenkorb.values():
             artikel_gesamtpreis = artikel["preis"] * artikel["menge"]
 
+            name = artikel["name"]
+            if len(name) > 30:
+                name = name[:27] + "..."
+
+           
             f.write(
-                f"{artikel['name']:<35} {artikel['menge']:>2}x "
-            )
-            f.write(
-                f"CHF {artikel['preis']:>6.2f} = CHF {artikel_gesamtpreis:>10.2f}\n"
-            )
+        f"{artikel['menge']}x {name:<30} = CHF {artikel_gesamtpreis:>7.2f}\n")
 
         f.write("-" * 60 + "\n")
-        f.write(f"{'GESAMTPREIS':<35} CHF {gesamtpreis:>10.2f}\n")
+        f.write(f"{'':>3}{'GESAMTPREIS':<30} = CHF {gesamtpreis:>7.2f}\n")
         f.write("=" * 60 + "\n")
         f.write("Vielen Dank für Ihre Bestellung!\n")

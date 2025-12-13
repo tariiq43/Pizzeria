@@ -49,7 +49,7 @@ class WunschPizza:
                 print(f"  - {zutat:<20} +CHF {self.preis_pro_zutat:>6.2f}")
         
         print("-"*60)
-        print(f"{'Gesamtpreis:':<20} CHF {self.preis_berechnen():>6.2f}")
+        print(f"{'Gesamtpreis:':<25} CHF {self.preis_berechnen():>6.2f}")
         print("="*60 + "\n")
     
     # Prüft, ob die Pizza gültig ist (mindestens 1 Zutat)
