@@ -1,5 +1,5 @@
 
-Verwenden Sie die Edit Funktion um das Readme lesen zu können!!!
+Verwenden Sie die Code Funktion um das Readme lesen zu können!!!
 
 
 Pizzeria Sunshine - Bestellsystem 
