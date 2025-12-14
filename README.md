@@ -1,3 +1,7 @@
+
+Verwenden Sie die Edit Funktion um das Readme lesen zu können!!!
+
+
 Pizzeria Sunshine - Bestellsystem 
 Ein einfaches Bestellsystem für eine Pizzeria, gemacht von Studierenden mit Python.  
  
