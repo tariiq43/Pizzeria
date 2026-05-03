@@ -38,3 +38,6 @@ order_id;datum;uhrzeit;artikel_id;artikel_name;menge;einzelpreis;artikel_gesamtp
 1765638569;13.12.2025;16:09:29;18;Hauswein rot 0.2l;3;7.00;21.00;107.50
 1765638848;13.12.2025;16:14:08;999;Wunschpizza mit Mozzarella, Oliven, Schinken;2;16.50;33.00;93.00
 1765638848;13.12.2025;16:14:08;9;Pizza BBQ Chicken;3;20.00;60.00;93.00
+1765978870;17.12.2025;14:41:10;20;Red Bull;2;6.50;13.00;43.00
+1765978870;17.12.2025;14:41:10;15;Sprite 0.33l;3;4.50;13.50;43.00
+1765978870;17.12.2025;14:41:10;999;Wunschpizza mit Mozzarella, Oliven, Ananas;1;16.50;16.50;43.00
