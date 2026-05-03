@@ -1,0 +1,28 @@
+flowchart LR
+    %% Akteure (links und rechts)
+    Kunde(("Kunde"))
+    Admin(("Admin"))
+
+    %% System-Grenze
+    subgraph System["Pizzeria System"]
+        UC1(("Menü anzeigen"))
+        UC2(("Bestellung verwalten"))
+        UC3(("Bestellung anzeigen"))
+        UC4(("Bestellung abschliessen"))
+        UC5(("Artikel hinzufügen"))
+        UC6(("Wunschpizza erstellen"))
+        UC7(("Bestellung anzeigen "))
+    end
+
+    %% Kunde-Verbindungen
+    Kunde --- UC1
+    Kunde --- UC2
+    Kunde --- UC3
+    Kunde --- UC4
+
+    %% Admin-Verbindung
+    Admin --- UC7
+
+    %% Include-Beziehungen (gestrichelt)
+    UC2 -. include .-> UC5
+    UC2 -. include .-> UC6
