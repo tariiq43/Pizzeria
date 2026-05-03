@@ -1,0 +1,68 @@
+flowchart LR
+    %% Domain Model als Sidebar (links, wird von allen Schichten genutzt)
+    subgraph Domain["Domain Model (SQLModel-Entities)"]
+        direction TB
+        DM["Kunde
+        Adresse
+        Mitarbeiter
+        Kategorie
+        Artikel
+        Zutat
+        ArtikelZutat
+        Bestellung
+        Bestellposition
+        WunschZutat
+        Quittung
+        Zahlung"]
+    end
+
+    %% Hauptfluss: 3 Schichten (UI -> Business Logic -> DAO/DB)
+    subgraph UI["UI: NiceGUI Pages + Controller"]
+        direction TB
+        P1["/menu"]
+        P2["/warenkorb"]
+        P3["/checkout"]
+        P4["/bestellungen"]
+        P5["/login"]
+        P6["/admin"]
+        CTRL["PageController
+        (Routing, Events, Session)"]
+    end
+
+    subgraph BL["Business Logic: Services"]
+        direction TB
+        S1["ArtikelService"]
+        S2["BestellService"]
+        S3["KundenService"]
+        S4["QuittungService"]
+        S5["ZahlungService"]
+        S6["AuthService"]
+    end
+
+    subgraph DAO["DAO / DB: Database Access + Persistence"]
+        direction TB
+        D1["ArtikelDAO"]
+        D2["BestellungDAO"]
+        D3["KundenDAO"]
+        D4["ZutatDAO"]
+        D5["QuittungDAO"]
+        D6["ZahlungDAO"]
+        DB[("SQLite pizzeria.db")]
+    end
+
+    %% Externe Bibliotheken
+    EXT1["reportlab (PDF)"]
+    EXT2["passlib / bcrypt"]
+
+    %% Hauptpfeile zwischen Schichten
+    UI --> BL
+    BL --> DAO
+
+    %% Domain Model wird von allen Schichten genutzt
+    UI -. "uses" .-> Domain
+    BL -. "works with" .-> Domain
+    DAO -. "persists" .-> Domain
+
+    %% Externe Bibliotheken
+    S4 -.-> EXT1
+    S6 -.-> EXT2
