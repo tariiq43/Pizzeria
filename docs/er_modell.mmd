@@ -1,0 +1,130 @@
+erDiagram
+    Kunden ||--o{ Adressen : "hat"
+    Kunden ||--o{ Bestellungen : "taetigt"
+
+    Adressen ||--o{ Bestellungen : "Lieferadresse"
+
+    Mitarbeiter ||--o{ Bestellungen : "bearbeitet"
+
+    Kategorien ||--|{ Artikel : "enthaelt"
+
+    Artikel ||--o{ Bestellpositionen : "wird bestellt als"
+    Artikel ||--o{ ArtikelZutaten : "Standard-Rezept"
+    Zutaten ||--o{ ArtikelZutaten : "verwendet in"
+
+    Bestellungen ||--|{ Bestellpositionen : "besteht aus"
+    Bestellungen ||--|| Quittungen : "erzeugt"
+    Bestellungen ||--|| Zahlungen : "bezahlt durch"
+
+    Bestellpositionen ||--o{ WunschZutaten : "Wunsch-Zutaten"
+    Zutaten ||--o{ WunschZutaten : "gewaehlt als"
+
+    Kunden {
+        INT           KundenID PK
+        TEXT          KundenName
+        TEXT          Email UK
+        TEXT          Telefon
+        TEXT          PasswortHash
+        DATE          RegistriertAm
+    }
+
+    Adressen {
+        INT           AdressID PK
+        INT           KundenID FK
+        TEXT          Strasse
+        TEXT          Hausnummer
+        TEXT          PLZ
+        TEXT          Ort
+        BOOLEAN       IstStandard
+    }
+
+    Mitarbeiter {
+        INT           MitarbeiterID PK
+        TEXT          Name
+        TEXT          Email UK
+        TEXT          PasswortHash
+        TEXT          Rolle
+        DATE          EingestelltAm
+    }
+
+    Kategorien {
+        INT           KategorieID PK
+        TEXT          KategorieName UK
+        TEXT          Beschreibung
+    }
+
+    Artikel {
+        INT           ArtikelID PK
+        INT           KategorieID FK
+        TEXT          ArtikelName
+        TEXT          Beschreibung
+        DECIMAL_10_2  EinzelPreis
+        BOOLEAN       Verfuegbar
+        BOOLEAN       IstWunschpizza
+        TEXT          BildPfad
+    }
+
+    Zutaten {
+        INT           ZutatID PK
+        TEXT          ZutatName UK
+        DECIMAL_10_2  PreisProEinheit
+        BOOLEAN       Vegetarisch
+        BOOLEAN       Vegan
+        BOOLEAN       EnthaeltLaktose
+        BOOLEAN       EnthaeltGluten
+    }
+
+    ArtikelZutaten {
+        INT           ArtikelID PK,FK
+        INT           ZutatID PK,FK
+        DECIMAL_10_2  Menge
+    }
+
+    Bestellungen {
+        INT           BestellungID PK
+        INT           KundenID FK
+        INT           AdressID FK
+        INT           MitarbeiterID FK "nullable"
+        DATE          BestellDatum
+        TEXT          BestellStatus
+        DECIMAL_10_2  Zwischensumme
+        DECIMAL_10_2  Liefergebuehr
+        DECIMAL_10_2  Gesamtbetrag
+        TEXT          LieferArt
+    }
+
+    Bestellpositionen {
+        INT           BestellpositionID PK
+        INT           BestellungID FK
+        INT           ArtikelID FK
+        INT           Menge
+        DECIMAL_10_2  EinzelPreis
+        DECIMAL_10_2  Positionsbetrag
+        TEXT          Bemerkung
+    }
+
+    WunschZutaten {
+        INT           BestellpositionID PK,FK
+        INT           ZutatID PK,FK
+    }
+
+    Quittungen {
+        INT           QuittungID PK
+        INT           BestellungID FK,UK
+        DATE          AusgestelltAm
+        TEXT          QuittungsNummer UK
+        DECIMAL_10_2  MwstSatz
+        DECIMAL_10_2  MwstBetrag
+        DECIMAL_10_2  Gesamtbetrag
+        TEXT          DateiPfad
+    }
+
+    Zahlungen {
+        INT           ZahlungID PK
+        INT           BestellungID FK,UK
+        TEXT          Zahlungsart
+        TEXT          ZahlungsStatus
+        DECIMAL_10_2  Betrag
+        DATE          BezahltAm
+        TEXT          TransaktionsID
+    }
