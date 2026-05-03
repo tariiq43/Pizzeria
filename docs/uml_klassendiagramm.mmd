@@ -1,0 +1,145 @@
+classDiagram
+    class Kunde {
+        -kunden_id : int
+        -name : str
+        -email : str
+        -passwort_hash : str
+        -telefon : str
+        -adressen : List[Adresse]
+        -bestellungen : List[Bestellung]
+        +passwort_pruefen(eingabe : str) bool
+        +adresse_hinzufuegen(adresse : Adresse)
+        +standard_adresse() Adresse
+    }
+
+    class Adresse {
+        -adress_id : int
+        -strasse : str
+        -hausnummer : str
+        -plz : str
+        -ort : str
+        -ist_standard : bool
+        +als_text() str
+    }
+
+    class Mitarbeiter {
+        -mitarbeiter_id : int
+        -name : str
+        -email : str
+        -passwort_hash : str
+        -rolle : str
+        +bestellung_uebernehmen(b : Bestellung)
+        +ist_admin() bool
+    }
+
+    class Kategorie {
+        -kategorie_id : int
+        -name : str
+        -beschreibung : str
+        -artikel : List[Artikel]
+    }
+
+    class Artikel {
+        -artikel_id : int
+        -name : str
+        -beschreibung : str
+        -einzel_preis : Decimal
+        -verfuegbar : bool
+        -ist_wunschpizza : bool
+        -kategorie : Kategorie
+        -standard_zutaten : List[ArtikelZutat]
+        +ist_pizza() bool
+        +als_menue_zeile() str
+    }
+
+    class Zutat {
+        -zutat_id : int
+        -name : str
+        -preis_pro_einheit : Decimal
+        -vegetarisch : bool
+        -vegan : bool
+    }
+
+    class ArtikelZutat {
+        -artikel : Artikel
+        -zutat : Zutat
+        -menge : Decimal
+    }
+
+    class Bestellung {
+        -bestellung_id : int
+        -bestelldatum : datetime
+        -status : str
+        -liefer_art : str
+        -kunde : Kunde
+        -lieferadresse : Adresse
+        -mitarbeiter : Optional[Mitarbeiter]
+        -positionen : List[Bestellposition]
+        -quittung : Quittung
+        -zahlung : Zahlung
+        +position_hinzufuegen(a : Artikel, menge : int)
+        +position_entfernen(p : Bestellposition)
+        +zwischensumme_berechnen() Decimal
+        +gesamtbetrag_berechnen() Decimal
+        +abschliessen()
+    }
+
+    class Bestellposition {
+        -bestellposition_id : int
+        -menge : int
+        -einzelpreis : Decimal
+        -bemerkung : str
+        -artikel : Artikel
+        -wunsch_zutaten : List[Zutat]
+        +positionsbetrag_berechnen() Decimal
+        +ist_wunschpizza() bool
+    }
+
+    class WunschPizza {
+        -zutaten : List[Zutat]
+        -basis_preis : Decimal
+        -preis_pro_zutat : Decimal
+        +zutat_hinzufuegen(z : Zutat)
+        +zutat_entfernen(z : Zutat)
+        +preis_berechnen() Decimal
+        +ist_valid() bool
+    }
+
+    class Quittung {
+        -quittung_id : int
+        -ausgestellt_am : datetime
+        -quittungs_nummer : str
+        -mwst_satz : Decimal
+        -mwst_betrag : Decimal
+        -datei_pfad : str
+        -bestellung : Bestellung
+        +als_pdf_speichern() str
+        +quittungs_nummer_generieren() str
+    }
+
+    class Zahlung {
+        -zahlung_id : int
+        -zahlungsart : str
+        -status : str
+        -betrag : Decimal
+        -bezahlt_am : datetime
+        -transaktions_id : str
+        -bestellung : Bestellung
+        +bezahlen()
+        +status_aktualisieren(neuer_status : str)
+        +ist_bezahlt() bool
+    }
+
+    Kunde "1" --> "0..n" Adresse : hat
+    Kunde "1" --> "0..n" Bestellung : taetigt
+    Adresse "1" --> "0..n" Bestellung : Lieferadresse
+    Mitarbeiter "1" --> "0..n" Bestellung : bearbeitet
+    Kategorie "1" --> "1..n" Artikel : enthaelt
+    Artikel "1" --> "0..n" ArtikelZutat : Standard-Rezept
+    Zutat "1" --> "0..n" ArtikelZutat : verwendet in
+    Bestellung "1" --> "1..n" Bestellposition : besteht aus
+    Bestellposition "0..n" --> "1" Artikel : referenziert
+    Bestellposition "1" --> "0..n" Zutat : Wunsch-Zutaten
+    Bestellung "1" --> "1" Quittung : erzeugt
+    Bestellung "1" --> "1" Zahlung : bezahlt durch
+    WunschPizza ..> Zutat : verwendet
