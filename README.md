@@ -241,7 +241,7 @@ Gemeinsam: `app.py`, `db.py`, `PageController`, Tests, Präsentation.
 - [x] ER-Modell
 - [x] UML-Klassendiagramm
 - [x] Architektur-Diagramm
-- [ ] `models.py` mit SQLModel-Klassen
+- [x] `models.py` mit SQLModel-Klassen
 - [ ] `db.py` mit Engine und Session-Factory
 - [ ] DAOs implementieren
 - [ ] Services implementieren
