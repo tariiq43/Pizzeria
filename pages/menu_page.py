@@ -13,7 +13,7 @@ Kein Verhalten in dieser Datei, das nicht zur UI gehört. Validierungen,
 Datenaggregation und Business-Regeln laufen ausschliesslich im Service.
 
 Status der Warenkorb-Integration:
-  Der „In den Warenkorb"-Button ist aktuell ein Platzhalter, weil
+  Der „In den Warenkorb“-Button ist aktuell ein Platzhalter, weil
   Mohammeds `BestellService` noch nicht steht. Sobald er die Funktion
   zur Verfügung stellt, wird der Aufruf in `_artikel_in_warenkorb_legen`
   ersetzt — alle anderen Stellen in dieser Datei bleiben unverändert.
@@ -133,7 +133,7 @@ def _artikel_in_warenkorb_legen(artikel: Artikel) -> None:
     — z. B.:
         from services.bestell_service import BestellService
         BestellService.warenkorb_artikel_hinzufuegen(artikel.id, menge=1)
-        ui.notify(f"„{artikel.name}" zum Warenkorb hinzugefügt", type="positive")
+        ui.notify(f"„{artikel.name}“ zum Warenkorb hinzugefügt", type="positive")
 
     Solange das nicht da ist, geben wir nur eine sichtbare Rückmeldung,
     damit die UI demonstrierbar ist und niemand auf einen toten Button
@@ -143,6 +143,6 @@ def _artikel_in_warenkorb_legen(artikel: Artikel) -> None:
     # aufrufen, sobald der `BestellService` existiert. Diese Datei selbst
     # muss dafür sonst nicht angefasst werden.
     ui.notify(
-        f"„{artikel.name}" — Warenkorb-Funktion folgt (Mohammeds BestellService).",
+        f"„{artikel.name}“ — Warenkorb-Funktion folgt (Mohammeds BestellService).",
         type="info",
     )

@@ -12,6 +12,9 @@ Verantwortlichkeiten:
     Kunden- und Admin-UI.
   - CRUD für Artikel, mit Soft-Validierung (warnt z. B. bei einem
     möglichen Duplikat „Name + Kategorie" — siehe `artikel_anlegen`).
+  - CRUD für Kategorien und Zutaten (vom Admin-Bereich genutzt). Beide
+    haben ein Unique-Feld `name` — daher hier harte Duplikat-Prüfung
+    statt Soft-Check (sonst würde der DB-Constraint scheitern).
   - Verwaltung der Standard-Rezepte (welche Zutaten in welcher Menge).
   - Transaktions-Grenze: Jede Service-Methode öffnet ihre eigene
     `get_session()`. Mehrere DAO-Aufrufe innerhalb einer Methode laufen
@@ -40,7 +43,7 @@ from dao.artikel_dao import ArtikelDAO
 from dao.artikel_zutat_dao import ArtikelZutatDAO
 from dao.kategorie_dao import KategorieDAO
 from dao.zutat_dao import ZutatDAO
-from domain.models import Artikel, ArtikelZutat, Kategorie
+from domain.models import Artikel, ArtikelZutat, Kategorie, Zutat
 from utils.db import get_session
 
 
@@ -339,6 +342,203 @@ class ArtikelService:
             # Frisch laden — der Aufrufer bekommt das aktuelle Rezept
             # inkl. eager-loaded Zutat-Relation zurück.
             return ArtikelZutatDAO.rezept_laden(session, artikel_id)
+
+    # =======================================================================
+    # Kategorien — CRUD (für Admin-Bereich)
+    # =======================================================================
+
+    @staticmethod
+    def kategorien_alle() -> list[Kategorie]:
+        """Liefert alle Kategorien, sortiert nach `sortierung` + `name`.
+
+        Wird im Admin gebraucht (Übersichts-Tabelle) und im Artikel-
+        Anlegen-Dialog (Dropdown-Auswahl der Ziel-Kategorie).
+        """
+        with get_session() as session:
+            return KategorieDAO.get_all(session, sortiert=True)
+
+    @staticmethod
+    def kategorie_anlegen(
+        *,
+        name: str,
+        beschreibung: Optional[str] = None,
+        sortierung: int = 0,
+    ) -> Kategorie:
+        """Legt eine neue Kategorie an.
+
+        `Kategorie.name` ist im Modell `unique` — wir prüfen das hier
+        explizit, damit der Aufrufer eine lesbare Fehlermeldung statt
+        einer rohen IntegrityError bekommt.
+        """
+        with get_session() as session:
+            if KategorieDAO.exists(session, name):
+                raise ValueError(f"Kategorie '{name}' existiert bereits.")
+            kategorie = Kategorie(
+                name=name, beschreibung=beschreibung, sortierung=sortierung
+            )
+            return KategorieDAO.create(session, kategorie)
+
+    @staticmethod
+    def kategorie_bearbeiten(
+        kategorie_id: int,
+        *,
+        name: Optional[str] = None,
+        beschreibung: Optional[str] = None,
+        sortierung: Optional[int] = None,
+    ) -> Kategorie:
+        """Aktualisiert die übergebenen Felder einer Kategorie.
+
+        Bei Namensänderung erneute Unique-Prüfung — sonst würde der DB-
+        Constraint mit einer kryptischen Fehlermeldung knallen.
+        Konvention wie bei `artikel_bearbeiten`: `None` heisst „nicht
+        ändern".
+        """
+        with get_session() as session:
+            kategorie = KategorieDAO.get_by_id(session, kategorie_id)
+            if kategorie is None:
+                raise ValueError(
+                    f"Kategorie mit ID {kategorie_id} existiert nicht."
+                )
+            if name is not None and name != kategorie.name:
+                if KategorieDAO.exists(session, name):
+                    raise ValueError(
+                        f"Kategorie '{name}' existiert bereits."
+                    )
+                kategorie.name = name
+            if beschreibung is not None:
+                kategorie.beschreibung = beschreibung
+            if sortierung is not None:
+                kategorie.sortierung = sortierung
+            return KategorieDAO.update(session, kategorie)
+
+    @staticmethod
+    def kategorie_loeschen(kategorie_id: int) -> bool:
+        """Löscht eine Kategorie.
+
+        Achtung: Hängen Artikel an dieser Kategorie, wirft die DB eine
+        IntegrityError (FK-Schutz aus `_foreign_keys_aktivieren`).
+        Die Page sollte das fangen und dem Admin vorschlagen, die
+        Artikel zuerst umzuhängen oder die Kategorie nur zu sortieren.
+        """
+        with get_session() as session:
+            return KategorieDAO.delete(session, kategorie_id)
+
+    # =======================================================================
+    # Zutaten — CRUD (für Admin-Bereich)
+    # =======================================================================
+
+    @staticmethod
+    def zutaten_alle(
+        *,
+        nur_verfuegbar: bool = False,
+        nur_vegetarisch: bool = False,
+    ) -> list[Zutat]:
+        """Liefert Zutaten, optional gefiltert.
+
+        Im Admin meist mit Default-Flags (= alle), damit man auch
+        ausverkaufte Zutaten sieht und wieder einschalten kann.
+        Im Wunschpizza-Builder später sinnvoll mit
+        `nur_verfuegbar=True`.
+        """
+        with get_session() as session:
+            return ZutatDAO.get_all(
+                session,
+                nur_verfuegbar=nur_verfuegbar,
+                nur_vegetarisch=nur_vegetarisch,
+            )
+
+    @staticmethod
+    def zutat_anlegen(
+        *,
+        name: str,
+        preis_pro_einheit: Decimal,
+        einheit: str = "Portion",
+        vegetarisch: bool = True,
+        verfuegbar: bool = True,
+    ) -> Zutat:
+        """Legt eine neue Zutat an.
+
+        `Zutat.name` ist `unique` — wie bei Kategorie prüfen wir das
+        explizit, damit die Fehlermeldung lesbar ist statt einer
+        rohen IntegrityError.
+        """
+        with get_session() as session:
+            if ZutatDAO.exists(session, name):
+                raise ValueError(f"Zutat '{name}' existiert bereits.")
+            zutat = Zutat(
+                name=name,
+                preis_pro_einheit=preis_pro_einheit,
+                einheit=einheit,
+                vegetarisch=vegetarisch,
+                verfuegbar=verfuegbar,
+            )
+            return ZutatDAO.create(session, zutat)
+
+    @staticmethod
+    def zutat_bearbeiten(
+        zutat_id: int,
+        *,
+        name: Optional[str] = None,
+        preis_pro_einheit: Optional[Decimal] = None,
+        einheit: Optional[str] = None,
+        vegetarisch: Optional[bool] = None,
+        verfuegbar: Optional[bool] = None,
+    ) -> Zutat:
+        """Aktualisiert die übergebenen Felder einer Zutat.
+
+        Bei Namensänderung erneute Unique-Prüfung. Konvention wie immer:
+        `None` heisst „nicht ändern". Der Preis bleibt frei änderbar —
+        ein Snapshot wird in `Bestellposition.einzelpreis` gehalten,
+        sodass alte Bestellungen ihre Werte behalten (siehe Modell).
+        """
+        with get_session() as session:
+            zutat = ZutatDAO.get_by_id(session, zutat_id)
+            if zutat is None:
+                raise ValueError(
+                    f"Zutat mit ID {zutat_id} existiert nicht."
+                )
+            if name is not None and name != zutat.name:
+                if ZutatDAO.exists(session, name):
+                    raise ValueError(f"Zutat '{name}' existiert bereits.")
+                zutat.name = name
+            if preis_pro_einheit is not None:
+                zutat.preis_pro_einheit = preis_pro_einheit
+            if einheit is not None:
+                zutat.einheit = einheit
+            if vegetarisch is not None:
+                zutat.vegetarisch = vegetarisch
+            if verfuegbar is not None:
+                zutat.verfuegbar = verfuegbar
+            return ZutatDAO.update(session, zutat)
+
+    @staticmethod
+    def zutat_verfuegbarkeit_umschalten(zutat_id: int) -> Zutat:
+        """Toggelt die Verfügbarkeit einer Zutat (Convenience für Admin)."""
+        with get_session() as session:
+            zutat = ZutatDAO.get_by_id(session, zutat_id)
+            if zutat is None:
+                raise ValueError(
+                    f"Zutat mit ID {zutat_id} existiert nicht."
+                )
+            aktualisiert = ZutatDAO.verfuegbarkeit_setzen(
+                session, zutat_id, verfuegbar=not zutat.verfuegbar
+            )
+            # `verfuegbarkeit_setzen` gibt None nur zurück, wenn die ID
+            # nicht existiert — das haben wir oben aber schon ausgeschlossen.
+            assert aktualisiert is not None
+            return aktualisiert
+
+    @staticmethod
+    def zutat_loeschen(zutat_id: int) -> bool:
+        """Löscht eine Zutat.
+
+        Achtung: Wenn die Zutat in `artikel_zutat` (Standard-Rezept)
+        oder `wunsch_zutat` (Wunschpizza) referenziert wird, wirft die
+        DB eine IntegrityError. Die Page sollte das fangen und
+        stattdessen `zutat_verfuegbarkeit_umschalten` vorschlagen.
+        """
+        with get_session() as session:
+            return ZutatDAO.delete(session, zutat_id)
 
     # =======================================================================
     # Interne Helfer
