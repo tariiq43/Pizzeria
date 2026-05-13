@@ -16,10 +16,14 @@ sich Berechtigungen und Datenmodell nicht vermischen.
 Designentscheidungen:
   - **bcrypt für Passwort-Hashing.** bcrypt ist langsam by design (das
     ist gewollt — bremst Brute-Force-Angriffe aus) und enthält von Haus
-    aus einen zufälligen Salt pro Passwort. Wir nutzen `passlib`, weil
-    es das Hash-Format inklusive Algorithmus und Cost-Faktor in einen
-    String packt — wir können später den Cost-Faktor anheben, ohne alte
-    Hashes zu invalidieren.
+    aus einen zufälligen Salt pro Passwort. Das Hash-Format enthält
+    Algorithmus + Cost-Faktor + Salt + Hash in einem einzigen String,
+    sodass wir später den Cost-Faktor erhöhen können, ohne alte Hashes
+    zu invalidieren.
+  - **bcrypt-Limit von 72 Bytes:** Die bcrypt-Bibliothek lehnt Passwörter
+    über 72 Bytes ab. Wir kürzen daher in `passwort_hashen` auf 72 Bytes
+    — bei realistischen Passwörtern (auch langen Passphrasen) tritt das
+    nie ein, aber so vermeiden wir einen harten Crash bei Extremfällen.
   - **Email wird normalisiert (lowercase + strip)** bevor sie gespeichert
     oder gesucht wird. SQLite ist case-sensitive, und Nutzer tippen Mails
     mal mit grossem ersten Buchstaben („Max@…") und mal klein. Ohne
@@ -42,7 +46,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from passlib.hash import bcrypt
+import bcrypt
 
 from dao.kunden_dao import KundenDAO
 from dao.mitarbeiter_dao import MitarbeiterDAO
@@ -57,6 +61,23 @@ class AuthService:
     # Passwort-Helfer (Hashing + Prüfung)
     # -----------------------------------------------------------------------
 
+    # Maximale Passwortlänge in Bytes, die bcrypt unterstützt.
+    # Längere Passwörter werden vor dem Hashing abgeschnitten — dieselbe
+    # Längenbegrenzung muss dann auch beim Prüfen gelten, sonst stimmen
+    # Hashes nicht überein.
+    _MAX_PASSWORT_BYTES = 72
+
+    @staticmethod
+    def _passwort_zu_bytes(passwort: str) -> bytes:
+        """Wandelt das Passwort in UTF-8-Bytes um und kürzt auf 72 Bytes.
+
+        bcrypt arbeitet auf Bytes, nicht auf Strings, und akzeptiert
+        maximal 72 Bytes (alle weiteren werden ohnehin ignoriert). Wir
+        kürzen explizit, damit das Verhalten zwischen `passwort_hashen`
+        und `passwort_pruefen` konsistent ist und keine Warnungen kommen.
+        """
+        return passwort.encode("utf-8")[: AuthService._MAX_PASSWORT_BYTES]
+
     @staticmethod
     def passwort_hashen(passwort: str) -> str:
         """Erzeugt einen bcrypt-Hash für ein Klartext-Passwort.
@@ -66,27 +87,37 @@ class AuthService:
         `passwort_hash` der jeweiligen Tabelle — das Klartext-Passwort
         darf NIE in die DB.
 
-        `bcrypt.hash` erzeugt automatisch einen zufälligen Salt, sodass
-        zwei gleiche Passwörter unterschiedliche Hashes haben.
+        `bcrypt.gensalt()` erzeugt automatisch einen zufälligen Salt,
+        sodass zwei gleiche Passwörter unterschiedliche Hashes haben.
+        Der Rückgabe-String enthält Algorithmus + Cost + Salt + Hash,
+        damit `checkpw` später weiss, wie er das Klartext-Passwort
+        hashen muss, um es zu vergleichen.
         """
         if not passwort:
             raise ValueError("Passwort darf nicht leer sein.")
-        return bcrypt.hash(passwort)
+        hash_bytes = bcrypt.hashpw(
+            AuthService._passwort_zu_bytes(passwort), bcrypt.gensalt()
+        )
+        return hash_bytes.decode("utf-8")
 
     @staticmethod
     def passwort_pruefen(passwort: str, passwort_hash: str) -> bool:
         """Prüft, ob ein Klartext-Passwort zu einem gespeicherten Hash passt.
 
-        Wird beim Login verwendet. `bcrypt.verify` ist konstant in der
-        Laufzeit (was die Gross-/Kleinschreibung des Hashes angeht) und
-        damit sicher gegen Timing-Angriffe.
+        Wird beim Login verwendet. `bcrypt.checkpw` ist konstant in der
+        Laufzeit und damit sicher gegen Timing-Angriffe (ein Angreifer
+        kann anhand der Antwortzeit nicht erraten, wie viele Zeichen
+        seiner Eingabe stimmen).
         """
         if not passwort or not passwort_hash:
             return False
         try:
-            return bcrypt.verify(passwort, passwort_hash)
-        except ValueError:
-            # `bcrypt.verify` wirft, wenn der gespeicherte Hash kein
+            return bcrypt.checkpw(
+                AuthService._passwort_zu_bytes(passwort),
+                passwort_hash.encode("utf-8"),
+            )
+        except (ValueError, TypeError):
+            # `bcrypt.checkpw` wirft, wenn der gespeicherte Hash kein
             # gültiger bcrypt-Hash ist (z. B. korrupte DB-Daten oder
             # Klartext-Passwörter aus einer alten Version). Wir geben
             # dann einfach „falsch" zurück statt die App crashen zu lassen.
