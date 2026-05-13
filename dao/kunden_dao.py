@@ -1,116 +1,158 @@
 """
-KundenDAO — Pizzeria Sunshine
-=============================
-Datenzugriff für die Kunden-Tabelle.
+DAO — Kunde
+============
+Datenbank-Zugriff für die Tabelle `kunde`.
 
-Kapselt alle DB-Operationen, die mit Kunde-Entities zu tun haben.
-Wird vom KundenService und AuthService verwendet.
+Ein Kunde ist die Person, die im Frontend bestellt. Er hat einen Login
+(Email + Passwort-Hash), eine oder mehrere Adressen (siehe `AdresseDAO`)
+und eine Bestellhistorie (siehe `BestellungDAO` vom Bestell-Team).
 
-Wichtig: Kein Service und keine Page darf direkt mit der Kunde-Tabelle reden —
-immer über diese DAO. So bleibt SQL an einer Stelle und ist später leicht
-austauschbar (z. B. wenn wir mal von SQLite auf Postgres wechseln).
+Diese DAO kapselt alle SQL-/ORM-Aufrufe rund um die Kunde-Tabelle und
+wird vom `KundenService` und vom `AuthService` verwendet. Pages oder
+andere Services dürfen NICHT direkt mit der Tabelle reden — immer über
+die DAO. So bleibt SQL an einer Stelle und ist später leicht austauschbar.
+
+Designentscheidungen:
+  - Statische Methoden, weil die DAO keinen Zustand hat. Die Session
+    wird von aussen reingegeben (vom Service oder Test). Vorteil: Mehrere
+    DAO-Aufrufe können dieselbe Session teilen und damit in einer
+    Transaktion laufen — z. B. „Kunde anlegen + erste Adresse anlegen"
+    soll entweder ganz klappen oder gar nicht.
+  - Rückgabewerte sind immer Domain-Objekte (`Kunde`), nie Tupel oder
+    Dicts. Dadurch bleibt die Service-Schicht frei von ORM-Details.
+  - Kein `commit()` in der DAO. Wer die Transaktion startet (der Service
+    via `get_session()`), schliesst sie auch ab. So bleibt das Verhalten
+    vorhersagbar und Tests sind einfacher.
 """
 
-from typing import List, Optional
+from __future__ import annotations
 
-from sqlmodel import select
+from typing import Optional
+
+from sqlmodel import Session, select
 
 from domain.models import Kunde
-from utils.db import get_session
 
 
 class KundenDAO:
-    """Data Access Object für Kunde-Entities."""
+    """Persistenz-Operationen für `Kunde`."""
 
-    # ----------------------------------------------------------------------
-    # Standard-CRUD
-    # ----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Create
+    # -----------------------------------------------------------------------
 
     @staticmethod
-    def create(kunde: Kunde) -> Kunde:
-        """Speichert einen neuen Kunden in der DB.
+    def create(session: Session, kunde: Kunde) -> Kunde:
+        """Speichert einen neuen Kunden und gibt ihn inkl. ID zurück.
 
-        Das Passwort sollte bereits gehasht sein (passwort_hash gesetzt,
-        nicht das Klartext-Passwort) — das macht der AuthService.
+        `flush()` + `refresh()` befüllen die generierte Primary-Key-ID
+        sofort. Der Service braucht sie z. B., um direkt danach eine
+        erste Adresse via `AdresseDAO` zu verknüpfen.
 
-        Gibt den Kunden zurück inkl. neu generierter id.
+        Das Passwort muss bereits gehasht sein (`passwort_hash` gesetzt,
+        nicht das Klartext-Passwort) — das macht der `AuthService`.
+        Wer hier ein Klartext-Passwort reinschiebt, hat einen Bug.
         """
-        with get_session() as session:
-            session.add(kunde)
-            session.commit()
-            session.refresh(kunde)  # holt die von SQLite generierte id
-            return kunde
+        session.add(kunde)
+        session.flush()
+        session.refresh(kunde)
+        return kunde
+
+    # -----------------------------------------------------------------------
+    # Read
+    # -----------------------------------------------------------------------
 
     @staticmethod
-    def get_by_id(kunden_id: int) -> Optional[Kunde]:
-        """Lädt einen Kunden anhand seiner ID. None, wenn nicht gefunden."""
-        with get_session() as session:
-            return session.get(Kunde, kunden_id)
+    def get_by_id(session: Session, kunden_id: int) -> Optional[Kunde]:
+        """Lädt einen Kunden über seine Primary Key.
 
-    @staticmethod
-    def update(kunde: Kunde) -> Kunde:
-        """Aktualisiert einen bestehenden Kunden.
-
-        Erwartet einen Kunden mit gesetzter id (also einen, der schon in
-        der DB existiert). SQLModel erkennt am vorhandenen PK, dass es ein
-        UPDATE und kein INSERT ist.
+        Gibt `None` zurück, wenn die ID nicht existiert. Die Service-
+        Schicht entscheidet, ob daraus eine Exception oder eine UI-
+        Meldung wird.
         """
-        with get_session() as session:
-            session.add(kunde)
-            session.commit()
-            session.refresh(kunde)
-            return kunde
+        return session.get(Kunde, kunden_id)
 
     @staticmethod
-    def delete(kunden_id: int) -> bool:
-        """Löscht einen Kunden anhand seiner ID.
+    def finde_per_email(session: Session, email: str) -> Optional[Kunde]:
+        """Findet einen Kunden anhand seiner Email — Hauptanwendung: Login.
 
-        Gibt True zurück, wenn gelöscht — False, wenn nicht gefunden.
-
-        Achtung: Der Kunde hat Adressen und Bestellungen. Wenn die noch
-        existieren, wirft SQLite einen Foreign-Key-Fehler (PRAGMA ist an).
-        Vorher mit AdresseDAO.delete und/oder BestellungDAO aufräumen.
+        Email ist im Modell als `unique` markiert, gibt also höchstens
+        einen Treffer. Suche ist case-sensitive (SQLite-Default) — der
+        `AuthService` sollte die Eingabe vorher normalisieren (lowercase
+        + strip), damit „Max@Beispiel.ch" und „max@beispiel.ch" als
+        derselbe Account erkannt werden.
         """
-        with get_session() as session:
-            kunde = session.get(Kunde, kunden_id)
-            if kunde is None:
-                return False
-            session.delete(kunde)
-            session.commit()
-            return True
-
-    # ----------------------------------------------------------------------
-    # Spezielle Queries
-    # ----------------------------------------------------------------------
+        statement = select(Kunde).where(Kunde.email == email)
+        return session.exec(statement).first()
 
     @staticmethod
-    def finde_per_email(email: str) -> Optional[Kunde]:
-        """Findet einen Kunden anhand seiner Email — wird beim Login verwendet.
-
-        Email ist im Modell als unique markiert, gibt also höchstens einen
-        Treffer. Suche ist case-sensitive (so wie SQLite es standardmässig macht).
-        """
-        with get_session() as session:
-            statement = select(Kunde).where(Kunde.email == email)
-            return session.exec(statement).first()
-
-    @staticmethod
-    def email_existiert(email: str) -> bool:
+    def email_existiert(session: Session, email: str) -> bool:
         """Prüft, ob eine Email schon registriert ist.
 
-        Wird bei der Registrierung verwendet, um doppelte Accounts zu
-        vermeiden — bevor das unique-Constraint einen Hard-Fail wirft,
-        kann der Service eine schöne UI-Meldung zeigen.
+        Günstige Vorab-Prüfung bei der Registrierung — bevor das UNIQUE-
+        Constraint einen Hard-Fail wirft, kann der Service eine schöne
+        UI-Meldung zeigen („Diese Email wird bereits verwendet").
         """
-        return KundenDAO.finde_per_email(email) is not None
+        return KundenDAO.finde_per_email(session, email) is not None
 
     @staticmethod
-    def alle() -> List[Kunde]:
-        """Gibt alle Kunden zurück, sortiert nach Nachname, Vorname.
+    def alle(session: Session, *, sortiert: bool = True) -> list[Kunde]:
+        """Liefert alle Kunden.
 
-        Für die Admin-Sicht. Im echten Betrieb mit Tausenden Kunden würde
-        man Pagination einbauen — fürs Schulprojekt reicht's so.
+        Bei `sortiert=True` (Default) zuerst nach Nachname, dann Vorname —
+        die übliche Admin-Sicht. Wer die Reihenfolge selbst bestimmen
+        will (z. B. Tests), setzt `sortiert=False`.
+
+        Im echten Betrieb mit Tausenden Kunden würde man Pagination
+        einbauen — fürs Schulprojekt mit ~50 Test-Kunden reicht das so.
         """
-        with get_session() as session:
-            statement = select(Kunde).order_by(Kunde.nachname, Kunde.vorname)
-            return list(session.exec(statement).all())
+        statement = select(Kunde)
+        if sortiert:
+            statement = statement.order_by(Kunde.nachname, Kunde.vorname)
+        return list(session.exec(statement).all())
+
+    # -----------------------------------------------------------------------
+    # Update
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def update(session: Session, kunde: Kunde) -> Kunde:
+        """Schreibt Änderungen eines bereits geladenen Kunden zurück.
+
+        Erwartet, dass `kunde.id` gesetzt ist (also das Objekt aus einem
+        vorherigen `get_*` stammt). SQLAlchemy erkennt anhand der ID,
+        dass es ein UPDATE und kein INSERT braucht.
+
+        Typische Updates: Telefonnummer ändern, Namen korrigieren.
+        Email-Änderung ist heikel (Konflikt mit UNIQUE) — das prüft der
+        Service vorher mit `email_existiert()`.
+        """
+        session.add(kunde)
+        session.flush()
+        session.refresh(kunde)
+        return kunde
+
+    # -----------------------------------------------------------------------
+    # Delete
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def delete(session: Session, kunden_id: int) -> bool:
+        """Löscht einen Kunden über seine ID.
+
+        Rückgabe:
+          - True, falls ein Kunde gelöscht wurde
+          - False, falls die ID nicht existierte
+
+        Achtung: Der Kunde hat Adressen und Bestellungen. Wenn die noch
+        existieren, schlägt das wegen Foreign-Key-Constraint fehl (PRAGMA
+        ist an). Vorher mit `AdresseDAO.delete` und/oder über das Bestell-
+        Team aufräumen — oder den Kunden stattdessen als „inaktiv"
+        markieren (wäre eine Modell-Erweiterung).
+        """
+        kunde = session.get(Kunde, kunden_id)
+        if kunde is None:
+            return False
+        session.delete(kunde)
+        session.flush()
+        return True
