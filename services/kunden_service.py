@@ -6,10 +6,11 @@ und Lieferadressen verwalten.
 
 Was NICHT hier liegt:
   - Login, Registrierung, Passwort-Änderung → `AuthService`.
-  - Bestellungen, Warenkorb, Checkout → `BestellungService`
-    (verantwortlich: Mohammed). `bestellhistorie()` delegiert da hin,
-    sobald sein Service steht — bis dahin als TODO markiert.
-  - Quittungen → `QuittungService`.
+  - Bestellungen aufgeben, Warenkorb, Checkout → `BestellService`
+    (verantwortlich: Mohammed). Lesen der Bestellhistorie machen wir
+    hier selbst über `BestellungDAO`, damit der Kunden-Bereich nicht
+    von Mohammeds Service abhängt.
+  - Quittungen erzeugen → `QuittungService`.
 
 Trennung Service vs. DAO:
   - DAO kennt nur SQL/ORM. Sie weiss nicht, was eine „Standard-Adresse"
@@ -46,8 +47,9 @@ from __future__ import annotations
 from typing import Optional
 
 from dao.adresse_dao import AdresseDAO
+from dao.bestellung_dao import BestellungDAO
 from dao.kunden_dao import KundenDAO
-from domain.models import Adresse, Kunde
+from domain.models import Adresse, Bestellung, Kunde
 from utils.db import get_session
 
 
@@ -288,24 +290,25 @@ class KundenService:
             return AdresseDAO.delete(session, adress_id)
 
     # -----------------------------------------------------------------------
-    # Bestellhistorie — Delegation an das Bestell-Team
+    # Bestellhistorie
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def bestellhistorie(kunden_id: int) -> list:
+    def bestellhistorie(kunden_id: int) -> list[Bestellung]:
         """Liefert die Bestellungen eines Kunden (neueste zuerst).
 
-        TODO: Sobald `BestellungService` von Mohammed steht, hier
-        delegieren — etwa:
+        Wird auf der `/bestellungen`-Seite verwendet, um dem Kunden seine
+        bisherigen Bestellungen anzuzeigen — inkl. Möglichkeit, eine
+        alte Quittung als PDF herunterzuladen.
 
-            from services.bestellung_service import BestellungService
-            return BestellungService.alle_fuer_kunde(kunden_id)
+        Greift direkt auf `BestellungDAO.alle_fuer_kunde` zu (lesender
+        Zugriff über die DAO-Schicht). Wir benutzen bewusst NICHT
+        Mohammeds `BestellService`, weil der eine Facade fürs Bestellen
+        ist — für reine Read-Queries der Bestell-Historie ist der direkte
+        DAO-Zugriff angemessen und vermeidet unnötige Kopplung zwischen
+        zwei Services.
 
-        Bis dahin gibt diese Methode eine leere Liste zurück, damit die
-        Profil-Seite nicht crasht. Sie ist hier verfügbar, damit die UI
-        einen stabilen Aufrufpunkt hat („alles, was den Kunden betrifft,
-        läuft über `KundenService`") und sich später nichts umbenennen
-        muss.
+        Sortierung (neueste zuerst) kommt aus der DAO.
         """
-        # Platzhalter, bis Mohammeds BestellungService verfügbar ist.
-        return []
+        with get_session() as session:
+            return BestellungDAO.alle_fuer_kunde(session, kunden_id)
