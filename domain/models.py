@@ -302,19 +302,6 @@ class Quittung(SQLModel, table=True):
     # Beziehungen
     bestellung: Optional[Bestellung] = Relationship(back_populates="quittung")
  
-    # --- Methoden (siehe UML) ---
-    def als_pdf_speichern(self, ziel_pfad: str) -> str:
-        """Erzeugt die Quittungs-PDF via reportlab.
- 
-        Implementierung steht im QuittungService — diese Methode bleibt
-        eine Fassade, damit das Model selbst keine Datei-I/O hat.
-        """
-        from utils.pdf_generator import quittung_als_pdf
- 
-        quittung_als_pdf(self, ziel_pfad)
-        self.pdf_pfad = ziel_pfad
-        return ziel_pfad
- 
  
 class Zahlung(SQLModel, table=True):
     """Zahlung zu einer Bestellung. 1:1 zur Bestellung."""
