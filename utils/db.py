@@ -124,7 +124,7 @@ def get_session() -> Iterator[Session]:
         with get_session() as session:
             kategorie = session.get(Kategorie, 1)
     """
-    session = Session(engine)
+    session = Session(engine, expire_on_commit=False)
     try:
         yield session
         session.commit()

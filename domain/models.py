@@ -12,7 +12,7 @@ gleichzeitig:
 Verwendet von allen Schichten (UI, Services, DAOs).
 """
  
-from __future__ import annotations
+
  
 from datetime import datetime
 from decimal import Decimal
@@ -68,23 +68,13 @@ class Kunde(SQLModel, table=True):
     nachname: str
     email: str = Field(index=True, unique=True)
     telefon: Optional[str] = None
-    passwort_hash: str  # via passlib/bcrypt
+    passwort_hash: str  # via bcrypt im AuthService
     erstellt_am: datetime = Field(default_factory=datetime.utcnow)
  
     # Beziehungen
     adressen: list["Adresse"] = Relationship(back_populates="kunde")
     bestellungen: list["Bestellung"] = Relationship(back_populates="kunde")
  
-    # --- Methoden (siehe UML) ---
-    def passwort_pruefen(self, klartext: str) -> bool:
-        """Vergleicht ein Klartext-Passwort mit dem gespeicherten Hash.
- 
-        Die eigentliche Hash-Logik liegt im AuthService (passlib).
-        Diese Methode delegiert nur — so bleibt das Model frei von I/O.
-        """
-        from passlib.hash import bcrypt  # lokaler Import, damit Tests einfacher sind
- 
-        return bcrypt.verify(klartext, self.passwort_hash)
  
     def voller_name(self) -> str:
         return f"{self.vorname} {self.nachname}"
@@ -127,10 +117,6 @@ class Mitarbeiter(SQLModel, table=True):
     # Beziehungen
     bestellungen: list["Bestellung"] = Relationship(back_populates="mitarbeiter")
  
-    def passwort_pruefen(self, klartext: str) -> bool:
-        from passlib.hash import bcrypt
- 
-        return bcrypt.verify(klartext, self.passwort_hash)
  
     def ist_admin(self) -> bool:
         return self.rolle == MitarbeiterRolle.ADMIN

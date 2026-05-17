@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.venv/
+
+# Test/Cache
+.pytest_cache/
+
+# IDE
+.vscode/
+.DS_Store
+
+# SQLite-DB
+*.db
+*.sqlite

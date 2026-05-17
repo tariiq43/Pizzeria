@@ -294,8 +294,8 @@ class AuthService:
                 return False
             if not AuthService.passwort_pruefen(
                 altes_passwort, kunde.passwort_hash
-            ):
-                return False
+        ):
+                raise ValueError("Altes Passwort ist falsch.")
 
             kunde.passwort_hash = AuthService.passwort_hashen(neues_passwort)
             KundenDAO.update(session, kunde)
@@ -321,11 +321,75 @@ class AuthService:
                 return False
             if not AuthService.passwort_pruefen(
                 altes_passwort, mitarbeiter.passwort_hash
-            ):
-                return False
+        ):
+                raise ValueError("Altes Passwort ist falsch.")
 
             mitarbeiter.passwort_hash = AuthService.passwort_hashen(
                 neues_passwort
             )
             MitarbeiterDAO.update(session, mitarbeiter)
             return True
+        
+        # -------------------------------------------------------------------
+    # Session-Verwaltung (NiceGUI app.storage.user)
+    # -------------------------------------------------------------------
+    # Wir speichern bewusst NUR die ID in der Session, nicht das ganze
+    # ORM-Objekt — Cookies sind klein, und Objekte werden bei DB-Aenderungen
+    # sonst stale. Beim Zugriff wird der User frisch aus der DB geladen.
+    #
+    # `from nicegui import app` passiert lokal in jeder Methode, damit die
+    # Tests AuthService importieren koennen, ohne dass NiceGUI laufen muss.
+
+    _SESSION_KEY_KUNDEN_ID = "kunden_id"
+    _SESSION_KEY_MITARBEITER_ID = "mitarbeiter_id"
+
+    @staticmethod
+    def aktuellen_kunden_in_session_setzen(kunde: Kunde) -> None:
+        """Speichert die Kunden-ID in der NiceGUI-Session."""
+        from nicegui import app
+        app.storage.user[AuthService._SESSION_KEY_KUNDEN_ID] = kunde.id
+        # Falls vorher ein Mitarbeiter eingeloggt war: rauswerfen
+        app.storage.user.pop(AuthService._SESSION_KEY_MITARBEITER_ID, None)
+
+    @staticmethod
+    def aktuellen_mitarbeiter_in_session_setzen(mitarbeiter: Mitarbeiter) -> None:
+        """Speichert die Mitarbeiter-ID in der NiceGUI-Session."""
+        from nicegui import app
+        app.storage.user[AuthService._SESSION_KEY_MITARBEITER_ID] = mitarbeiter.id
+        app.storage.user.pop(AuthService._SESSION_KEY_KUNDEN_ID, None)
+
+    @staticmethod
+    def aktueller_kunde() -> Optional[Kunde]:
+        """Laedt den aktuell eingeloggten Kunden frisch aus der DB."""
+        from nicegui import app
+        kunden_id = app.storage.user.get(AuthService._SESSION_KEY_KUNDEN_ID)
+        if kunden_id is None:
+            return None
+        with get_session() as session:
+            return KundenDAO.get_by_id(session, kunden_id)
+
+    @staticmethod
+    def aktueller_mitarbeiter() -> Optional[Mitarbeiter]:
+        """Laedt den aktuell eingeloggten Mitarbeiter frisch aus der DB."""
+        from nicegui import app
+        mitarbeiter_id = app.storage.user.get(AuthService._SESSION_KEY_MITARBEITER_ID)
+        if mitarbeiter_id is None:
+            return None
+        with get_session() as session:
+            return MitarbeiterDAO.get_by_id(session, mitarbeiter_id)
+
+    @staticmethod
+    def ist_eingeloggt() -> bool:
+        """True, wenn ein Kunde ODER ein Mitarbeiter eingeloggt ist."""
+        from nicegui import app
+        return (
+            app.storage.user.get(AuthService._SESSION_KEY_KUNDEN_ID) is not None
+            or app.storage.user.get(AuthService._SESSION_KEY_MITARBEITER_ID) is not None
+        )
+
+    @staticmethod
+    def ausloggen() -> None:
+        """Entfernt Kunden- und Mitarbeiter-Session."""
+        from nicegui import app
+        app.storage.user.pop(AuthService._SESSION_KEY_KUNDEN_ID, None)
+        app.storage.user.pop(AuthService._SESSION_KEY_MITARBEITER_ID, None)
